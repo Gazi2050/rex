@@ -1,0 +1,16 @@
+- generic [ref=f3e3]:
+  - generic [ref=f3e9]:
+    - generic [ref=f3e10]: Default ▾
+    - generic [ref=f3e12]:
+      - generic [ref=f3e13]:
+        - button "gazi ✕" [ref=f3e14]:
+          - generic [ref=f3e15]: gazi
+          - generic [ref=f3e19]: ✕
+        - button "learning ✕" [ref=f3e20]:
+          - generic [ref=f3e21]: learning
+          - generic [ref=f3e25]: ✕
+        - button "Projects ✕" [ref=f3e26]:
+          - generic [ref=f3e27]: Projects
+          - generic [ref=f3e31]: ✕
+      - button "+" [ref=f3e32]
+  - generic [ref=f3e33]: Search (Ctrl+F)

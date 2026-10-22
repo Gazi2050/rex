@@ -51,6 +51,12 @@ import {
   useState,
 } from "react";
 import { useShallow } from "zustand/react/shallow";
+import {
+  dragFinalIndex,
+  dragGapForIndex,
+  dragGapIndex,
+  dragSlotLefts,
+} from "./lib/dragGap";
 import { selectTabAgentStatus } from "./lib/tabAgentStatus";
 import { labelFor } from "./lib/tabLabel";
 import type { EditorTab, Tab, TerminalTab } from "./lib/useTabs";
@@ -82,6 +88,69 @@ type Props = {
   compact?: boolean;
 };
 
+/** Mutable drag bookkeeping; lives in a ref so moves never re-render. */
+type DragState = {
+  pointerId: number;
+  startX: number;
+  /** Strip scroll at grab time, so wheel-scrolling mid-drag keeps the tab under the cursor. */
+  startScroll: number;
+  fromId: number;
+  /** Index of the dragged tab in the real strip order (the index on drop). */
+  fromIndex: number;
+  active: boolean;
+  el: HTMLElement | null;
+  /** Layout left of the grabbed tab, which never moves while dragging. */
+  slot0: number;
+  lastTx: number;
+  /** Left edge of the first slot; slots are rebuilt from this origin. */
+  origin: number;
+  /** Measured inter-tab gap, so the simulated slots match the real layout. */
+  gapPx: number;
+  /** Simulated strip order; the dragged tab's slot is the hole it will drop into. */
+  order: number[];
+  /** Index of `fromId` inside `order`. */
+  index: number;
+  widths: Map<number, number>;
+  origLefts: Map<number, number>;
+  lefts: Map<number, number>;
+};
+
+const tabEls = (root: HTMLElement | null) =>
+  Array.from(root?.querySelectorAll<HTMLElement>("[data-tab-id]") ?? []);
+
+const tabElFor = (root: HTMLElement | null, id: number) =>
+  root?.querySelector<HTMLElement>(`[data-tab-id="${id}"]`) ?? null;
+
+const clearTabTransforms = (root: HTMLElement | null) => {
+  for (const el of tabEls(root)) {
+    el.style.transition = "";
+    el.style.transform = "";
+  }
+};
+
+const settleTab = (el: HTMLElement | null, fromX: number) => {
+  if (!el || Math.abs(fromX) < 0.5) return;
+  // ponytail: fixed durations; WAAPI cannot read the --dur-* variables.
+  el.animate([{ transform: `translateX(${fromX}px)` }, { transform: "none" }], {
+    duration: 120,
+    easing: "cubic-bezier(0.2, 0, 0, 1)",
+  });
+};
+
+// Rebuild the simulated slots from the measured widths, then slide every
+// non-dragged tab towards its new one. CSS transitions do the easing, so a
+// crossing costs a handful of style writes and nothing re-renders.
+const paintSimulation = (root: HTMLElement | null, st: DragState) => {
+  st.lefts = dragSlotLefts(st.order, st.widths, st.origin, st.gapPx);
+  for (const id of st.order) {
+    if (id === st.fromId) continue;
+    const el = tabElFor(root, id);
+    if (!el) continue;
+    const shift = (st.lefts.get(id) ?? 0) - (st.origLefts.get(id) ?? 0);
+    el.style.transform = shift === 0 ? "" : `translateX(${shift}px)`;
+  }
+};
+
 export function TabBar({
   tabs,
   activeId,
@@ -106,14 +175,15 @@ export function TabBar({
   const listRef = useRef<HTMLDivElement>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [draggingId, setDraggingId] = useState<number | null>(null);
-  const [dropGap, setDropGap] = useState<number | null>(null);
   const [showAllLanguages, setShowAllLanguages] = useState(false);
-  const drag = useRef<{
-    pointerId: number;
-    startX: number;
-    fromId: number;
-    active: boolean;
-  } | null>(null);
+  // A drag reorders a local copy of the strip (`order`) and only commits the
+  // real reorder on drop: no React work per crossing, so the terminal and the
+  // rest of the app never re-render mid-drag.
+  const drag = useRef<DragState | null>(null);
+  // Set when the drop committed a reorder: the layout effect below plays the
+  // settle from where the cursor released.
+  const settle = useRef<{ id: number; fromX: number } | null>(null);
+  const simActive = useRef(false);
 
   // Play the enter animation only for tabs opened after the first paint, never
   // the restored set and never on switch/reorder (triggers are keyed, so they
@@ -165,25 +235,58 @@ export function TabBar({
     }
   }, [pill, pillReady]);
 
-  const gapAtX = (clientX: number) => {
-    const els = Array.from(
-      scrollRef.current?.querySelectorAll<HTMLElement>("[data-tab-id]") ?? [],
-    );
-    for (let i = 0; i < els.length; i++) {
-      const r = els[i].getBoundingClientRect();
-      if (clientX < r.left + r.width / 2) return i;
-    }
-    return els.length;
+  // Pointer x in the strip's layout space. offsetLeft/offsetWidth are used for
+  // the hit test because they ignore the dragged tab's transform; the ratio
+  // converts client pixels into the same space the offsets live in (app zoom).
+  const stripX = (clientX: number) => {
+    const list = listRef.current;
+    if (!list) return clientX;
+    const rect = list.getBoundingClientRect();
+    const scale = rect.width / list.offsetWidth || 1;
+    return (clientX - rect.left) / scale;
   };
 
-  const endDrag = (currentTarget: HTMLElement) => {
+  const finishDrag = (currentTarget: HTMLElement, commit: boolean) => {
     const st = drag.current;
-    if (st) currentTarget.releasePointerCapture?.(st.pointerId);
+    if (!st) return;
+    if (currentTarget.hasPointerCapture?.(st.pointerId)) {
+      currentTarget.releasePointerCapture(st.pointerId);
+    }
     drag.current = null;
     setDraggingId(null);
-    setDropGap(null);
     document.body.style.userSelect = "";
+    if (!st.active) return;
+
+    const moved = st.index !== st.fromIndex;
+    // Visual offset from the slot the tab lands in: the layout jumps to the
+    // simulated order on drop, and the settle starts from where it was.
+    const fromX = st.slot0 + st.lastTx - (st.lefts.get(st.fromId) ?? st.slot0);
+    if (commit && moved) {
+      // Real layout arrives in the next commit; the layout effect below clears
+      // the simulation and settles from `fromX` in that same frame.
+      settle.current = { id: st.fromId, fromX };
+      onReorder(st.fromId, dragGapForIndex(st.index, st.fromIndex));
+      return;
+    }
+    simActive.current = false;
+    clearTabTransforms(scrollRef.current);
+    if (commit) settleTab(st.el, fromX);
   };
+
+  // After a committing drop, the reordered layout has just been committed with
+  // the simulation transforms still on. Clear them and settle the tab before
+  // paint, so nothing flashes back to the old slot.
+  useLayoutEffect(() => {
+    if (drag.current) return;
+    if (simActive.current) {
+      simActive.current = false;
+      clearTabTransforms(scrollRef.current);
+    }
+    const s = settle.current;
+    if (!s) return;
+    settle.current = null;
+    settleTab(tabElFor(scrollRef.current, s.id), s.fromX);
+  }, [tabs]);
 
   // Horizontal wheel scroll without holding shift.
   useEffect(() => {
@@ -211,7 +314,7 @@ export function TabBar({
     <div
       ref={scrollRef}
       data-tauri-drag-region
-      className="min-w-0 shrink overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      className="min-w-0 flex-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
       <div className="flex w-max items-center gap-0.5">
         <Tabs
@@ -226,7 +329,9 @@ export function TabBar({
               aria-hidden
               className="pointer-events-none absolute left-0 top-1/2 h-7 rounded-md bg-foreground/[0.07] shadow-sm ring-1 ring-inset ring-foreground/[0.05]"
               style={
-                pill
+                // Hidden while the active tab is dragged: the lifted tab draws
+                // its own surface, so the pill would just ghost the empty slot.
+                pill && draggingId !== activeId
                   ? {
                       width: pill.width,
                       transform: `translate(${pill.left}px, -50%)`,
@@ -245,20 +350,12 @@ export function TabBar({
               const isActive = t.id === activeId;
               const isNew = !firstRender && !seen.has(t.id);
 
-              const srcIndex = tabs.findIndex((x) => x.id === draggingId);
-              const showGap = (gap: number) =>
-                draggingId !== null &&
-                dropGap === gap &&
-                gap !== srcIndex &&
-                gap !== srcIndex + 1;
-
               // While renaming, render a non-button cell so the <input> is not
               // nested inside the trigger <button> (invalid HTML, and WebKit
               // blocks focus/selection on inputs inside buttons).
               if (editingId === t.id && t.kind === "terminal") {
                 return (
                   <Fragment key={t.id}>
-                    {showGap(i) && <DropIndicator />}
                     <div
                       data-tab-id={t.id}
                       className={cn(
@@ -276,9 +373,6 @@ export function TabBar({
                         onCancel={() => setEditingId(null)}
                       />
                     </div>
-                    {i === tabs.length - 1 && showGap(tabs.length) && (
-                      <DropIndicator />
-                    )}
                   </Fragment>
                 );
               }
@@ -295,8 +389,20 @@ export function TabBar({
                     drag.current = {
                       pointerId: e.pointerId,
                       startX: e.clientX,
+                      startScroll: scrollRef.current?.scrollLeft ?? 0,
                       fromId: t.id,
+                      fromIndex: 0,
                       active: false,
+                      el: null,
+                      slot0: 0,
+                      lastTx: 0,
+                      origin: 0,
+                      gapPx: 0,
+                      order: [],
+                      index: 0,
+                      widths: new Map(),
+                      origLefts: new Map(),
+                      lefts: new Map(),
                     };
                     e.currentTarget.setPointerCapture(e.pointerId);
                   }}
@@ -306,22 +412,81 @@ export function TabBar({
                     if (!st.active) {
                       if (Math.abs(e.clientX - st.startX) < 4) return;
                       st.active = true;
+                      st.el = e.currentTarget;
+                      const els = tabEls(scrollRef.current);
+                      for (const el of els) {
+                        const id = Number(el.dataset.tabId);
+                        st.order.push(id);
+                        st.widths.set(id, el.offsetWidth);
+                        st.origLefts.set(id, el.offsetLeft);
+                      }
+                      st.fromIndex = Math.max(0, st.order.indexOf(st.fromId));
+                      st.index = st.fromIndex;
+                      st.origin = els[0]?.offsetLeft ?? 0;
+                      // Slots are rebuilt from measured widths, so the gap has
+                      // to be measured too: it is what the layout uses.
+                      st.gapPx =
+                        els.length > 1
+                          ? els[1].offsetLeft -
+                            (els[0].offsetLeft + els[0].offsetWidth)
+                          : 0;
+                      st.lefts = new Map(st.origLefts);
+                      st.slot0 = st.el.offsetLeft;
+                      st.startScroll =
+                        scrollRef.current?.scrollLeft ?? st.startScroll;
+                      // Siblings ease into their simulated slot; the dragged
+                      // tab must track the cursor with no easing at all.
+                      for (const el of els) {
+                        if (el !== st.el) {
+                          el.style.transition =
+                            "transform 150ms cubic-bezier(0.2, 0, 0, 1)";
+                        }
+                      }
+                      simActive.current = true;
                       setDraggingId(st.fromId);
                       document.body.style.userSelect = "none";
                     }
                     e.preventDefault();
-                    setDropGap(gapAtX(e.clientX));
+                    const gap = dragGapIndex(
+                      st.order.map((id) => ({
+                        id,
+                        left: st.lefts.get(id) ?? 0,
+                        width: st.widths.get(id) ?? 0,
+                      })),
+                      stripX(e.clientX),
+                      st.fromId,
+                    );
+                    const to = Math.max(
+                      0,
+                      Math.min(
+                        dragFinalIndex(gap, st.index),
+                        st.order.length - 1,
+                      ),
+                    );
+                    if (to !== st.index) {
+                      st.order.splice(st.index, 1);
+                      st.order.splice(to, 0, st.fromId);
+                      st.index = to;
+                      paintSimulation(scrollRef.current, st);
+                    }
+                    const el = st.el;
+                    if (el) {
+                      // `startScroll` keeps the tab glued to the cursor when
+                      // the strip scrolls underneath it mid-drag.
+                      st.lastTx =
+                        e.clientX -
+                        st.startX +
+                        (st.startScroll -
+                          (scrollRef.current?.scrollLeft ?? st.startScroll));
+                      el.style.transform = `translateX(${st.lastTx}px)`;
+                    }
                   }}
                   onPointerUp={(e) => {
                     const st = drag.current;
-                    if (st?.active && dropGap !== null) {
-                      onReorder(st.fromId, dropGap);
-                    } else if (st && !st.active) {
-                      onSelect(t.id);
-                    }
-                    endDrag(e.currentTarget);
+                    if (st && !st.active) onSelect(t.id);
+                    finishDrag(e.currentTarget, true);
                   }}
-                  onPointerCancel={(e) => endDrag(e.currentTarget)}
+                  onPointerCancel={(e) => finishDrag(e.currentTarget, false)}
                   onDoubleClick={() => isPreview && onPin(t.id)}
                   onAuxClick={(e) => {
                     if (e.button === 1 && tabs.length > 1) {
@@ -350,7 +515,8 @@ export function TabBar({
                     isActive
                       ? "text-foreground dark:text-foreground"
                       : "text-muted-foreground hover:text-foreground/80 dark:text-muted-foreground",
-                    draggingId === t.id && "opacity-50",
+                    draggingId === t.id &&
+                      "z-20 bg-accent shadow-lg ring-1 ring-foreground/10 data-active:bg-accent dark:data-active:bg-accent",
                     compact
                       ? "px-1.5!"
                       : tabs.length === 1
@@ -361,7 +527,7 @@ export function TabBar({
                   <span
                     className={cn(
                       "flex min-w-0 items-center gap-1.5",
-                      compact ? "max-w-48" : "max-w-80",
+                      compact ? "max-w-48" : "max-w-120",
                     )}
                   >
                     {t.kind === "editor" ? (
@@ -573,15 +739,7 @@ export function TabBar({
                 </ContextMenu>
               );
 
-              return (
-                <Fragment key={t.id}>
-                  {showGap(i) && <DropIndicator />}
-                  {tabNode}
-                  {i === tabs.length - 1 && showGap(tabs.length) && (
-                    <DropIndicator />
-                  )}
-                </Fragment>
-              );
+              return <Fragment key={t.id}>{tabNode}</Fragment>;
             })}
           </TabsList>
         </Tabs>
@@ -596,15 +754,6 @@ export function TabBar({
         />
       </div>
     </div>
-  );
-}
-
-function DropIndicator() {
-  return (
-    <span
-      aria-hidden
-      className="my-0.5 w-0.5 shrink-0 self-stretch rounded-full bg-primary"
-    />
   );
 }
 

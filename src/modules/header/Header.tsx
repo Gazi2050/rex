@@ -188,7 +188,7 @@ export function Header({
           onOverrideLanguage={onOverrideLanguage}
           compact={compact}
         />
-        <div data-tauri-drag-region className="h-full min-w-2 flex-1" />
+        <div data-tauri-drag-region className="h-full min-w-2 shrink-0" />
       </div>
 
       <SearchInline ref={searchRef} target={searchTarget} compact={compact} />

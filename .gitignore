@@ -37,3 +37,4 @@ __pycache__/
 
 # GitHub Actions disabled for the Rex fork (re-enable: remove this line, then git add .github/workflows)
 .github/workflows/
+.playwright-mcp

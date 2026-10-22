@@ -71,7 +71,11 @@ export function NewTabMenu({
     <Popover open={launcherOpen} onOpenChange={setLauncherOpen}>
       <PopoverAnchor asChild>
         <span className="inline-flex">
-          <DropdownMenu open={menuOpen} onOpenChange={onMenuOpenChange}>
+          <DropdownMenu
+            open={menuOpen}
+            onOpenChange={onMenuOpenChange}
+            modal={false}
+          >
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
