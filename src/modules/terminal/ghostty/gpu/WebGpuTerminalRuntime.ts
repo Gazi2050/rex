@@ -665,7 +665,7 @@ export class WebGpuTerminalRuntime {
   }
 
   private flushFrame(frameAt = performance.now()): void {
-    const benchStart = __TERAX_BENCH__ ? performance.now() : 0;
+    const benchStart = __REX_BENCH__ ? performance.now() : 0;
     this.animationFrame = null;
     this.pacer.frameStarted(frameAt);
     this.animationFrames += 1;
@@ -759,7 +759,7 @@ export class WebGpuTerminalRuntime {
           continue;
         target.consumeDirty();
         encoder ??= resources.device.createCommandEncoder({
-          label: "Terax terminal window frame",
+          label: "Rex terminal window frame",
         });
         const result = target.encode(encoder, resources);
         if (result.drawn > 0) rendered = true;
@@ -770,7 +770,7 @@ export class WebGpuTerminalRuntime {
       if (encoder && rendered) {
         resources.device.queue.submit([encoder.finish()]);
         this.submittedFrames += 1;
-        if (__TERAX_BENCH__) {
+        if (__REX_BENCH__) {
           const now = performance.now();
           smoothHooks()?.frame(now, now - benchStart);
         }
@@ -918,7 +918,7 @@ export class WebGpuTerminalRuntime {
     this.assertLive();
     if (!adapter) throw new Error("No compatible WebGPU adapter was found");
     const device = await adapter.requestDevice({
-      label: "Terax shared terminal renderer",
+      label: "Rex shared terminal renderer",
     });
     if (this.disposed || this.fatalError) {
       device.destroy();
@@ -981,7 +981,7 @@ export class WebGpuTerminalRuntime {
       texture: { sampleType: "unfilterable-float" },
     });
     this.bindGroupLayout = device.createBindGroupLayout({
-      label: "Terax terminal bindings",
+      label: "Rex terminal bindings",
       entries: [
         { binding: 0, visibility, buffer: { type: "uniform" } },
         storage(1),
@@ -997,16 +997,16 @@ export class WebGpuTerminalRuntime {
     });
 
     const backgroundModule = device.createShaderModule({
-      label: "Terax terminal background shader",
+      label: "Rex terminal background shader",
       code: BACKGROUND_SHADER,
     });
     const glyphModule = device.createShaderModule({
-      label: "Terax terminal glyph shader",
+      label: "Rex terminal glyph shader",
       code: GLYPH_SHADER,
     });
     const [backgroundPipeline, glyphPipeline] = await Promise.all([
       device.createRenderPipelineAsync({
-        label: "Terax terminal background pipeline",
+        label: "Rex terminal background pipeline",
         layout,
         vertex: { module: backgroundModule, entryPoint: "vertex_main" },
         fragment: {
@@ -1017,7 +1017,7 @@ export class WebGpuTerminalRuntime {
         primitive: { topology: "triangle-list" },
       }),
       device.createRenderPipelineAsync({
-        label: "Terax terminal glyph pipeline",
+        label: "Rex terminal glyph pipeline",
         layout,
         vertex: { module: glyphModule, entryPoint: "vertex_main" },
         fragment: {
@@ -1047,7 +1047,7 @@ export class WebGpuTerminalRuntime {
     this.backgroundPipeline = backgroundPipeline;
     this.glyphPipeline = glyphPipeline;
     this.emptyStorage = device.createBuffer({
-      label: "Terax terminal empty storage",
+      label: "Rex terminal empty storage",
       size: 16,
       usage: GPUBufferUsage.STORAGE,
     });

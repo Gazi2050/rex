@@ -22,7 +22,7 @@ describe("deriveTitle", () => {
   });
 
   it("takes the first user text part", () => {
-    expect(deriveTitle([message("what is terax")])).toBe("what is terax");
+    expect(deriveTitle([message("what is rex")])).toBe("what is rex");
   });
 
   it("uses the first line only", () => {

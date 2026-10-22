@@ -26,10 +26,10 @@ let
 in
 
 assert lib.assertMsg (builtins.hasAttr sys srcMap)
-  "terax: unsupported platform ${sys}";
+  "rex: unsupported platform ${sys}";
 
 stdenv.mkDerivation {
-  pname = "terax";
+  pname = "rex";
   inherit version;
 
   src = srcMap.${sys};
@@ -57,9 +57,9 @@ stdenv.mkDerivation {
   installPhase = if stdenv.hostPlatform.isLinux then ''
     mkdir -p $out/bin $out/share
     cp -r usr/share/* $out/share/
-    install -Dm755 usr/bin/terax $out/bin/terax
+    install -Dm755 usr/bin/terax $out/bin/rex
 
-    wrapProgram $out/bin/terax \
+    wrapProgram $out/bin/rex \
       "''${gappsWrapperArgs[@]}" \
       --prefix GST_PLUGIN_SYSTEM_PATH : "$GST_PLUGIN_SYSTEM_PATH"
   '' else ''

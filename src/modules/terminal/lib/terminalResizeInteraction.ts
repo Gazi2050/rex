@@ -11,7 +11,7 @@ type ResizeInteractionState = {
   readonly listeners: Set<InteractionListener>;
 };
 
-const GLOBAL_STATE_KEY = "__TERAX_TERMINAL_RESIZE_INTERACTION__";
+const GLOBAL_STATE_KEY = "__REX_TERMINAL_RESIZE_INTERACTION__";
 const globalScope = globalThis as typeof globalThis & {
   [GLOBAL_STATE_KEY]?: ResizeInteractionState;
 };

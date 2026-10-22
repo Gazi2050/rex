@@ -143,7 +143,7 @@ describe("built startup graph", () => {
   let outDir = "";
 
   beforeAll(() => {
-    outDir = mkdtempSync(join(tmpdir(), "terax-dist-budget-"));
+    outDir = mkdtempSync(join(tmpdir(), "rex-dist-budget-"));
     // Sourcemaps list every module inside each chunk, so the package check does
     // not depend on how a chunk happens to be named. Built into a temp dir:
     // the real dist/ is untouched.
@@ -161,8 +161,8 @@ describe("built startup graph", () => {
       ],
       {
         cwd: root,
-        // TERAX_BENCH is explicitly off: a shipped build must not contain the app-lab driver.
-        env: { ...process.env, NODE_ENV: "production", TERAX_BENCH: "" },
+        // REX_BENCH is explicitly off: a shipped build must not contain the app-lab driver.
+        env: { ...process.env, NODE_ENV: "production", REX_BENCH: "" },
         stdio: "pipe",
         timeout: 240_000,
       },
@@ -235,7 +235,7 @@ describe("built startup graph", () => {
           env: {
             ...process.env,
             NODE_ENV: "production",
-            TERAX_BENCH: "1",
+            REX_BENCH: "1",
             ...extra,
           },
           stdio: "pipe",
@@ -250,31 +250,31 @@ describe("built startup graph", () => {
       }
       return "";
     };
-    expect(failure({ TERAX_BENCH_IDENTIFIER: "" })).toContain(
-      "TERAX_BENCH_IDENTIFIER",
+    expect(failure({ REX_BENCH_IDENTIFIER: "" })).toContain(
+      "REX_BENCH_IDENTIFIER",
     );
-    expect(failure({ TERAX_BENCH_IDENTIFIER: "app.crynta.terax" })).toContain(
+    expect(failure({ REX_BENCH_IDENTIFIER: "app.gazi.rex" })).toContain(
       "not the product identifier",
     );
     // Nothing was emitted by either attempt.
     expect(existsSync(join(outDir, "guarded"))).toBe(false);
   });
 
-  it("contains none of the app-lab benchmark driver (TERAX_BENCH is off)", () => {
+  it("contains none of the app-lab benchmark driver (REX_BENCH is off)", () => {
     // The driver (src/bench) and its Tauri commands exist only in builds made with
-    // TERAX_BENCH=1: `__TERAX_BENCH__` is the literal `false` otherwise, so its lazy import, the
+    // REX_BENCH=1: `__REX_BENCH__` is the literal `false` otherwise, so its lazy import, the
     // chunks behind it and every bench-only string are removed before bundling.
     const markers = [
       "bench_config",
       "bench_window",
       "bench_exit",
-      "__teraxBenchConfig",
+      "__rexBenchConfig",
       // The smoothness probe's seam (src/bench/smoothHooks.ts): product code reports to it
-      // only behind __TERAX_BENCH__, and the lookup itself is gated too.
-      "__teraxSmooth",
-      "terax:bench:",
-      "TERAX_BENCH",
-      "__TERAX_BENCH__",
+      // only behind __REX_BENCH__, and the lookup itself is gated too.
+      "__rexSmooth",
+      "rex:bench:",
+      "REX_BENCH",
+      "__REX_BENCH__",
     ];
     const files = (dir: string): string[] =>
       readdirSync(dir, { withFileTypes: true }).flatMap((entry) =>

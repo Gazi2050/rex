@@ -1,14 +1,14 @@
 # PTY shell integration
 
-This guide elaborates on `TERAX.md`. If anything here conflicts with `TERAX.md`, `TERAX.md` wins.
+This guide elaborates on `REX.md`. If anything here conflicts with `REX.md`, `REX.md` wins.
 
 ## Session model
 
 Block sessions keep direct terminal input until OSC 133 confirms prompt input.
 Bare shells therefore remain usable. Bash before 4.4 lacks PS0 and emits
-`OSC 133;B;terax_blocks=0`, retaining its native prompt instead of activating
-Terax's shared command bar. Shell command labels stay bounded; block rerun uses
-the complete command submitted through Terax, never a truncated OSC label.
+`OSC 133;B;rex_blocks=0`, retaining its native prompt instead of activating
+Rex's shared command bar. Shell command labels stay bounded; block rerun uses
+the complete command submitted through Rex, never a truncated OSC label.
 
 A terminal tab maps to one PTY session. Sessions live in `PtyState` (`src-tauri/src/modules/pty/mod.rs:20`):
 
@@ -21,7 +21,7 @@ pub struct PtyState {
 
 IDs start at 1 and monotonically increase; they are never reused so the frontend can treat `0` as unset.
 
-`pty_open` spawns a session on a blocking thread, registers it with the PTY hub under the calling webview's label, inserts it into the map, and returns the id. Output and exit codes travel over the multiplexed `terax-pty` stream (see `pty-transport-v2.md`), not per-PTY channels. `pty_write` accepts raw bytes with an `x-pty-id` header and queues them to the session's writer thread, so a full input pipe cannot block other IPC and write order and I/O errors are preserved.
+`pty_open` spawns a session on a blocking thread, registers it with the PTY hub under the calling webview's label, inserts it into the map, and returns the id. Output and exit codes travel over the multiplexed `rex-pty` stream (see `pty-transport-v2.md`), not per-PTY channels. `pty_write` accepts raw bytes with an `x-pty-id` header and queues them to the session's writer thread, so a full input pipe cannot block other IPC and write order and I/O errors are preserved.
 
 ## Reader / writer / waiter threads, and the hub
 
@@ -69,11 +69,11 @@ Integration scripts live in `src-tauri/src/modules/pty/scripts/`:
 
 - `zshenv.zsh`, `zprofile.zsh`, `zlogin.zsh`, `zshrc.zsh` for zsh
 - `bashrc.bash` for bash
-- `init.fish` for fish, installed to `~/.config/fish/conf.d/terax.fish`
+- `init.fish` for fish, installed to `~/.config/fish/conf.d/rex.fish`
 
-Zsh is launched with `ZDOTDIR` pointing at a temp directory that sources our scripts and then the user's real configs. Bash uses `--rcfile` with a wrapper that sources the user's `~/.bashrc` after Terax's. Fish uses `conf.d` so no user file is replaced.
+Zsh is launched with `ZDOTDIR` pointing at a temp directory that sources our scripts and then the user's real configs. Bash uses `--rcfile` with a wrapper that sources the user's `~/.bashrc` after Rex's. Fish uses `conf.d` so no user file is replaced.
 
-All integrated shells emit **OSC 7** (cwd) and **OSC 133 A/B/C/D** (prompt boundaries and exit code) so Terax can track cwd and detect command boundaries without parsing the user's prompt.
+All integrated shells emit **OSC 7** (cwd) and **OSC 133 A/B/C/D** (prompt boundaries and exit code) so Rex can track cwd and detect command boundaries without parsing the user's prompt.
 
 ### Windows
 
@@ -93,7 +93,7 @@ The profile wraps the user's existing `prompt` function to emit OSC 7 + OSC 133 
 
 ### Fish 4.0+
 
-Fish 4.0 writes its own OSC 133 prompt markers. To avoid doubling, Terax sets `fish_features=no-mark-prompt` and re-asserts its own prompt via `-C` after `config.fish` runs.
+Fish 4.0 writes its own OSC 133 prompt markers. To avoid doubling, Rex sets `fish_features=no-mark-prompt` and re-asserts its own prompt via `-C` after `config.fish` runs.
 
 ## Concurrency and process lifetime on Windows
 
@@ -105,7 +105,7 @@ Fish 4.0 writes its own OSC 133 prompt markers. To avoid doubling, Terax sets `f
 
 ### Job Object
 
-Each ConPTY child is assigned to a Windows Job Object with `JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE` (`job.rs:34`). When the Job HANDLE drops - clean shutdown, panic, or even a SIGKILL'd Terax process - the kernel kills every descendant of the shell. Without this, `TerminateProcess` only kills the immediate child and `npm run dev` started inside pwsh would be orphaned.
+Each ConPTY child is assigned to a Windows Job Object with `JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE` (`job.rs:34`). When the Job HANDLE drops - clean shutdown, panic, or even a SIGKILL'd Rex process - the kernel kills every descendant of the shell. Without this, `TerminateProcess` only kills the immediate child and `npm run dev` started inside pwsh would be orphaned.
 
 On macOS and Linux, `Drop for Session` calls `killer.kill()`. Dev `Ctrl-C` of `cargo run` can still leave orphans because destructors may not run; that is acceptable for development only.
 
@@ -117,7 +117,7 @@ PowerShell / PSReadLine sends a cursor-position query (`ESC[6n`) at startup and 
 
 ### Agent detection
 
-The reader thread runs an `AgentDetector` (`agent_detect.rs`) over the byte stream. It is armed by `OSC 133;C;<cmd>` or by a self-armed `OSC 777` marker and emits `terax:agent-signal` transitions (`started`, `working`, `attention`, `finished`, `exited`). Detection is driven only by OSC sequences, never by raw output, so a repainting TUI never flaps.
+The reader thread runs an `AgentDetector` (`agent_detect.rs`) over the byte stream. It is armed by `OSC 133;C;<cmd>` or by a self-armed `OSC 777` marker and emits `rex:agent-signal` transitions (`started`, `working`, `attention`, `finished`, `exited`). Detection is driven only by OSC sequences, never by raw output, so a repainting TUI never flaps.
 
 ### Enter key
 
@@ -133,7 +133,7 @@ Terminal input sends `\r` (CR), not `\n` (LF). PowerShell on Windows requires CR
 
 ## See also
 
-- [`TERAX.md`](../../TERAX.md) - the architecture source of truth
+- [`REX.md`](../../REX.md) - the architecture source of truth
 - [`docs/README.md`](../README.md) - index of contributor guides
 - [Two-process model](two-process-model.md) - IPC boundary and command catalog
 - [Terminal renderer pool](terminal-renderer-pool.md) - model ownership and presentation pooling

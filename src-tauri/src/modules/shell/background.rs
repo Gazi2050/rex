@@ -169,11 +169,11 @@ pub fn spawn(
     };
     for (name, pipe) in [
         (
-            "terax-bg-out",
+            "rex-bg-out",
             Box::new(stdout_pipe) as Box<dyn Read + Send>,
         ),
         (
-            "terax-bg-err",
+            "rex-bg-err",
             Box::new(stderr_pipe) as Box<dyn Read + Send>,
         ),
     ] {
@@ -183,7 +183,7 @@ pub fn spawn(
     {
         let proc_ref = proc.clone();
         let child_for_wait = proc.child.clone();
-        spawn_thread("terax-bg-wait", move || {
+        spawn_thread("rex-bg-wait", move || {
             match child_for_wait.wait() {
                 Ok(status) => match status.code() {
                     Some(code) => proc_ref.exit_code.store(code, Ordering::Release),

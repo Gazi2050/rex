@@ -61,13 +61,13 @@ describe("native AI fetch transport", () => {
     const [, body, options] = calls("ai_http_stream")[0];
     expect(body).toBeInstanceOf(Uint8Array);
     expect(new TextDecoder().decode(body)).toBe("hello 日本語");
-    expect(JSON.parse(options.headers["x-terax-ai-request"])).toMatchObject({
+    expect(JSON.parse(options.headers["x-rex-request"])).toMatchObject({
       method: "POST",
       headers: { "x-test": "yes" },
       allowPrivateNetwork: true,
       onEvent: "__CHANNEL__:1",
     });
-    expect(options.headers["x-terax-ai-request"]).not.toMatch(/[^\x20-\x7e]/);
+    expect(options.headers["x-rex-request"]).not.toMatch(/[^\x20-\x7e]/);
     headers();
     const response = await pending;
     packet(1, "a");

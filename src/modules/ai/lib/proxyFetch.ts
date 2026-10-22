@@ -229,7 +229,7 @@ async function proxyFetchImpl(
       return;
     }
     void invoke("ai_http_stream", body, {
-      headers: { "x-terax-ai-request": metadata },
+      headers: { "x-rex-request": metadata },
     }).then(
       () => {
         if (cancelled) void cancelNative();

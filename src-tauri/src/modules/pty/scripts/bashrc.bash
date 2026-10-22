@@ -1,4 +1,4 @@
-# terax-shell-integration (bashrc)
+# rex-shell-integration (bashrc)
 #
 # Differences vs zsh integration:
 # - We emulate login-shell init manually (/etc/profile, profile files) because
@@ -7,8 +7,8 @@
 #   skip it — a fragile DEBUG-trap alternative would clobber the user's own
 #   traps and interact badly with debuggers.
 
-if [ -z "$__TERAX_HOOKS_LOADED" ]; then
-  __TERAX_HOOKS_LOADED=1
+if [ -z "$__REX_HOOKS_LOADED" ]; then
+  __REX_HOOKS_LOADED=1
 
   [ -f /etc/profile ] && source /etc/profile
   [ -f /etc/bashrc ] && source /etc/bashrc
@@ -24,20 +24,20 @@ if [ -z "$__TERAX_HOOKS_LOADED" ]; then
   # on reload, guard with a flag.
   [ -f "$HOME/.bashrc" ] && source "$HOME/.bashrc"
 
-  _terax_prompt_end='\[\e]133;B\e\\\]'
+  _rex_prompt_end='\[\e]133;B\e\\\]'
   if [ "${BASH_VERSINFO[0]:-0}" -lt 4 ] \
      || { [ "${BASH_VERSINFO[0]:-0}" -eq 4 ] && [ "${BASH_VERSINFO[1]:-0}" -lt 4 ]; }; then
-    unset TERAX_BLOCKS
-    _terax_prompt_end='\[\e]133;B;terax_blocks=0\e\\\]'
+    unset REX_BLOCKS
+    _rex_prompt_end='\[\e]133;B;rex_blocks=0\e\\\]'
   fi
 
-  if [ -n "$TERAX_CLI" ] && [ -x "$TERAX_CLI" ]; then
-    terax() {
-      command "$TERAX_CLI" "$@"
+  if [ -n "$REX_CLI" ] && [ -x "$REX_CLI" ]; then
+    rex() {
+      command "$REX_CLI" "$@"
     }
   fi
 
-  _terax_urlencode() {
+  _rex_urlencode() {
     local LC_ALL=C s="$1" i c
     for (( i=0; i<${#s}; i++ )); do
       c="${s:i:1}"
@@ -48,28 +48,28 @@ if [ -z "$__TERAX_HOOKS_LOADED" ]; then
     done
   }
 
-  _terax_precmd() {
-    local _terax_ret=$?
-    printf '\e]133;D;%s\e\\' "$_terax_ret"
-    printf '\e]7;file://%s%s\e\\' "${HOSTNAME:-$(uname -n 2>/dev/null)}" "$(_terax_urlencode "$PWD")"
-    if [ -n "$TERAX_BLOCKS" ]; then
+  _rex_precmd() {
+    local _rex_ret=$?
+    printf '\e]133;D;%s\e\\' "$_rex_ret"
+    printf '\e]7;file://%s%s\e\\' "${HOSTNAME:-$(uname -n 2>/dev/null)}" "$(_rex_urlencode "$PWD")"
+    if [ -n "$REX_BLOCKS" ]; then
       # Host renders its own input bar: suppress the shell prompt (B marker
       # only) and reserve header/gap rows, mirroring the zsh integration.
-      if [ -n "$_terax_block_seen" ]; then
+      if [ -n "$_rex_block_seen" ]; then
         PS1='\n\n\[\e]133;B\e\\\]'
       else
         PS1='\n\[\e]133;B\e\\\]'
       fi
-    elif [ -z "$__TERAX_PS1_INJECTED" ]; then
-      PS1="${_terax_prompt_end}${PS1}"
-      __TERAX_PS1_INJECTED=1
+    elif [ -z "$__REX_PS1_INJECTED" ]; then
+      PS1="${_rex_prompt_end}${PS1}"
+      __REX_PS1_INJECTED=1
     fi
     printf '\e]133;A\e\\'
   }
 
   case ":${PROMPT_COMMAND:-}:" in
-    *":_terax_precmd:"*) ;;
-    *) PROMPT_COMMAND="_terax_precmd${PROMPT_COMMAND:+;$PROMPT_COMMAND}" ;;
+    *":_rex_precmd:"*) ;;
+    *) PROMPT_COMMAND="_rex_precmd${PROMPT_COMMAND:+;$PROMPT_COMMAND}" ;;
   esac
 
   # Pre-exec marker via PS0 (bash 4.4+). PS0 is expanded just before a command
@@ -77,15 +77,15 @@ if [ -z "$__TERAX_HOOKS_LOADED" ]; then
   # on every command including inside PROMPT_COMMAND.
   if [ "${BASH_VERSINFO[0]:-0}" -gt 4 ] \
      || { [ "${BASH_VERSINFO[0]:-0}" -eq 4 ] && [ "${BASH_VERSINFO[1]:-0}" -ge 4 ]; }; then
-    if [ -n "$TERAX_BLOCKS" ]; then
+    if [ -n "$REX_BLOCKS" ]; then
       # PS0 only expands, never executes: the arithmetic inside the array
       # subscript sets the seen flag while the unset array expands to nothing.
-      PS0='\[\e]133;C\e\\\]${_terax_noop[$((_terax_block_seen=1))]}'"${PS0:-}"
+      PS0='\[\e]133;C\e\\\]${_rex_noop[$((_rex_block_seen=1))]}'"${PS0:-}"
     else
       PS0='\[\e]133;C\e\\\]'"${PS0:-}"
     fi
   fi
 
-  _terax_precmd
+  _rex_precmd
 fi
 :

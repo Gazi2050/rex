@@ -1,6 +1,6 @@
 <div align="center">
-  <img src="../../public/logo.png" width="144" height="144" alt="Terax" />
-  <h1>Terax</h1>
+  <img src="../../public/logo.png" width="144" height="144" alt="Rex" />
+  <h1>Rex</h1>
   <p><strong>Workspace de desenvolvimento leve, focado no terminal e nativo de IA.</strong></p>
   <p><a href="https://terax.app">Site</a> · <a href="https://terax.app/docs">Documentação</a> · <a href="https://github.com/crynta/Terax-website">Código-fonte do site</a></p>
 
@@ -19,7 +19,7 @@
 
 ---
 
-Terax é um ambiente de desenvolvimento (ADE) leve, de código aberto, focado no terminal e nativo de IA, criado com Tauri 2 + Rust e React 19. Inclui backend PTY nativo com renderizador WebGL, painel lateral de IA com agentes que usa suas próprias chaves ou modelos totalmente locais, além de editor de código, explorador de arquivos, controle de versão com gráfico Git e painel de visualização web. Cerca de 7-8 MB em disco. Sem telemetria. Sem conta.
+Rex é um ambiente de desenvolvimento (ADE) leve, de código aberto, focado no terminal e nativo de IA, criado com Tauri 2 + Rust e React 19. Inclui backend PTY nativo com renderizador WebGL, painel lateral de IA com agentes que usa suas próprias chaves ou modelos totalmente locais, além de editor de código, explorador de arquivos, controle de versão com gráfico Git e painel de visualização web. Cerca de 7-8 MB em disco. Sem telemetria. Sem conta.
 
 ## Capturas de tela
 
@@ -82,7 +82,7 @@ Terax é um ambiente de desenvolvimento (ADE) leve, de código aberto, focado no
 
 - **Provedores com sua própria chave:** OpenAI, Anthropic, Google (Gemini), Groq, xAI (Grok), Cerebras, OpenRouter, DeepSeek, Mistral e qualquer endpoint compatível com OpenAI
 - **Local / offline:** LM Studio, MLX, Ollama
-- **Fluxo com agentes:** planos, subagentes, memória do projeto via `TERAX.md`, leitura / escrita / edição / multiedição / grep / glob, bash com aprovação e processos em segundo plano
+- **Fluxo com agentes:** planos, subagentes, memória do projeto via `REX.md`, leitura / escrita / edição / multiedição / grep / glob, bash com aprovação e processos em segundo plano
 - **Orquestração de agentes de programação:** inicie Claude Code no terminal, inspecione a saída e envie tarefas adicionais por ferramentas sujeitas a aprovação
 - **Compositor:** trechos de prompt com `#handle`, arquivos com `@path`, entrada de voz e anexos do explorador ou da seleção
 - **Agentes personalizados** com prompt de sistema e subconjunto de ferramentas próprios
@@ -90,7 +90,7 @@ Terax é um ambiente de desenvolvimento (ADE) leve, de código aberto, focado no
 
 ## Instalação
 
-Os instaladores mais recentes estão na página de [Releases](https://github.com/crynta/terax-ai/releases/latest). O Terax se atualiza automaticamente por ela.
+Os instaladores mais recentes estão na página de [Releases](https://github.com/crynta/terax-ai/releases/latest). O Rex se atualiza automaticamente por ela.
 
 ### Notas para Windows
 
@@ -100,7 +100,7 @@ Os instaladores mais recentes estão na página de [Releases](https://github.com
 ### Notas para Linux
 
 - **Arch / AUR:** `yay -S terax-bin` ou `paru`. Acompanha a versão mais recente.
-- **NixOS / Nix:** use o flake oficial com `nix profile install github:crynta/terax-ai` fora do NixOS. No NixOS, importe o flake e adicione `inputs.terax.packages.${pkgs.system}.terax` a `environment.systemPackages`. `nixosModules.terax` também oferece uma configuração simplificada.
+- **NixOS / Nix:** use o flake oficial com `nix profile install github:crynta/terax-ai` fora do NixOS. No NixOS, importe o flake e adicione `inputs.rex.packages.${pkgs.system}.rex` a `environment.systemPackages`. `nixosModules.rex` também oferece uma configuração simplificada.
 - **AppImage:** requer FUSE. Sem ele: `./Terax_*.AppImage --appimage-extract-and-run`. Em caso de falhas no Wayland, tente `WEBKIT_DISABLE_DMABUF_RENDERER=1`. Os pacotes `.deb` / `.rpm` usam a pilha GTK do sistema e costumam ser mais suaves.
 
 ## Configurar a IA
@@ -153,4 +153,4 @@ As builds para Windows são assinadas com um certificado gratuito fornecido pela
 
 ## Licença
 
-Terax é licenciado sob a Apache-2.0. Para informações sobre dependências, consulte a [Apache License 2.0](../../LICENSE).
+Rex é licenciado sob a Apache-2.0. Para informações sobre dependências, consulte a [Apache License 2.0](../../LICENSE).

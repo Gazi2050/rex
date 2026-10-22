@@ -34,7 +34,7 @@ describe("agent signal fan-out", () => {
 
     expect(native.listen).toHaveBeenCalledTimes(1);
     expect(native.listen).toHaveBeenCalledWith(
-      "terax:agent-signal",
+      "rex:agent-signal",
       expect.any(Function),
     );
 

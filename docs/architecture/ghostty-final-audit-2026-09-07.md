@@ -56,7 +56,7 @@ The checked-in [allocation/profile data](ghostty-final-audit-profile-2026-09-07.
 and [block-enabled stress data](ghostty-final-audit-soak-2026-09-07.json) include
 artifact checksums and raw samples. Runs used Node 26.5.0 on macOS arm64. Heavy
 audit build/test jobs did not overlap these runs, but the workstation was not
-an otherwise idle, controlled benchmark machine. The user's Terax was not
+an otherwise idle, controlled benchmark machine. The user's Rex was not
 launched, replaced, or used as candidate measurement data.
 The profile's directory labels are repository-relative; numerical samples and
 artifact checksums are unchanged from the generated report.
@@ -97,7 +97,7 @@ These timings differ from prior runs and favor different variants for different
 workloads. They do not establish a speedup from this audit or justify changing
 artifact selection. The stress run lasts seconds, not days. Its Node RSS samples
 include the test runner and earlier sequential work, and must not be interpreted
-as packaged Terax memory or added to WASM allocation counters. IPC, React,
+as packaged Rex memory or added to WASM allocation counters. IPC, React,
 WebKit, GPU presentation and application energy are outside both harnesses.
 
 ## Rejected PTY optimization
@@ -138,11 +138,11 @@ drain overhead remains a correctness tradeoff and a packaged throughput gate.
   handoff. The checked-in minimum remains macOS 13.
 
 A fresh macOS arm64 bundle was built from `c5ab994` as
-`src-tauri/target/release/bundle/macos/Terax Resource Candidate.app`. Its local
+`src-tauri/target/release/bundle/macos/Rex Resource Candidate.app`. Its local
 ad-hoc signature passes `codesign --verify --deep --strict`, and it occupies
 9,880 KiB on disk. It was not launched or installed. This is an application
 directory measurement, not an installer size or a notarized release. The bundle
-retains Terax's application identifier and settings, so quit the existing Terax
+retains Rex's application identifier and settings, so quit the existing Rex
 before switching to it for manual testing.
 
 The identified lifecycle defects are fixed and regression-tested. This audit

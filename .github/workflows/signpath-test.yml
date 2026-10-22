@@ -51,8 +51,8 @@ jobs:
           $msi = Get-ChildItem -Path "$bundleDir/msi"  -Filter "*.msi" -ErrorAction Stop | Select-Object -First 1
           if (-not $exe) { throw "No .exe installer produced by Tauri" }
           if (-not $msi) { throw "No .msi installer produced by Tauri" }
-          Copy-Item $exe.FullName -Destination "$stagingDir/terax-setup.exe"
-          Copy-Item $msi.FullName -Destination "$stagingDir/terax.msi"
+          Copy-Item $exe.FullName -Destination "$stagingDir/rex-setup.exe"
+          Copy-Item $msi.FullName -Destination "$stagingDir/rex.msi"
           Write-Host "Staged files:"
           Get-ChildItem $stagingDir
 

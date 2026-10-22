@@ -1,9 +1,9 @@
 import { readFile } from "node:fs/promises";
 import {
   GPU_CELL_BYTES,
-  TeraxGhostty,
+  RexGhostty,
   decodeGpuCell,
-} from "@terax/ghostty-core/adapted";
+} from "@rex/ghostty-core/adapted";
 import { beforeAll, describe, expect, it } from "vitest";
 import { AdaptedGhosttyTerminalModel } from "./AdaptedGhosttyTerminalModel";
 import type { GhosttyGpuFrame } from "./GhosttyTerminalModel";
@@ -13,7 +13,7 @@ const encoder = new TextEncoder();
 describe.each(["ghostty-vt", "ghostty-vt-scalar"])(
   "GPU frames from the adapted Ghostty model (%s)",
   (artifact) => {
-    let core: TeraxGhostty;
+    let core: RexGhostty;
 
     beforeAll(async () => {
       const file = await readFile(
@@ -22,7 +22,7 @@ describe.each(["ghostty-vt", "ghostty-vt-scalar"])(
           import.meta.url,
         ),
       );
-      core = await TeraxGhostty.loadBytes(Uint8Array.from(file).buffer);
+      core = await RexGhostty.loadBytes(Uint8Array.from(file).buffer);
     });
 
     function create(cols = 40, rows = 8) {

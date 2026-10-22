@@ -6,7 +6,7 @@ type WritePtyHandler = (bytes: Uint8Array) => void;
 
 // Equivalent WAT:
 // (module
-//   (import "terax" "write_pty" (func (param i32 i32 i32 i32)))
+//   (import "rex" "write_pty" (func (param i32 i32 i32 i32)))
 //   (export "write_pty" (func 0)))
 //
 // Exporting the typed import turns a JavaScript callback into a WebAssembly
@@ -34,7 +34,7 @@ export class OfficialGhosttyCallbackBridge {
   ): Promise<OfficialGhosttyCallbackBridge> {
     let bridge: OfficialGhosttyCallbackBridge | null = null;
     const { instance } = await WebAssembly.instantiate(CALLBACK_MODULE_BYTES, {
-      terax: {
+      rex: {
         write_pty: (
           terminal: number,
           _userdata: number,

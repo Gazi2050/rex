@@ -78,7 +78,7 @@ jobs:
         uses: tauri-apps/tauri-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TERAX_CLI_TARGET: ${{ matrix.rust-target }}
+          REX_CLI_TARGET: ${{ matrix.rust-target }}
 
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
@@ -91,7 +91,7 @@ jobs:
           APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
         with:
           tagName: ${{ github.ref_name }}
-          releaseName: "Terax ${{ github.ref_name }}"
+          releaseName: "Rex ${{ github.ref_name }}"
           releaseBody: "See the assets to download and install. Auto-update is built in."
           releaseDraft: true
           prerelease: false
@@ -127,8 +127,8 @@ jobs:
           chmod +x "./$BASENAME"
           "./$BASENAME" --appimage-extract >/dev/null
 
-          test -x squashfs-root/usr/bin/terax \
-            || { echo "terax binary missing from AppImage"; exit 1; }
+          test -x squashfs-root/usr/bin/rex \
+            || { echo "rex binary missing from AppImage"; exit 1; }
 
           # linuxdeploy may already exclude some of these libraries.
           find squashfs-root \( -type f -o -type l \) \
@@ -147,8 +147,8 @@ jobs:
             echo "Wayland library still present after repack"
             exit 1
           fi
-          test -x squashfs-root/usr/bin/terax \
-            || { echo "terax binary missing from repacked AppImage"; exit 1; }
+          test -x squashfs-root/usr/bin/rex \
+            || { echo "rex binary missing from repacked AppImage"; exit 1; }
           popd >/dev/null
 
           cp "$WORK/$BASENAME" "$APPIMAGE"
@@ -179,8 +179,8 @@ jobs:
           if (-not $exe) { throw "No NSIS .exe produced by Tauri" }
           if (-not $msi) { throw "No .msi produced by Tauri" }
           New-Item -ItemType Directory -Path signpath-staging -Force | Out-Null
-          Copy-Item $exe.FullName signpath-staging/terax-setup.exe
-          Copy-Item $msi.FullName signpath-staging/terax.msi
+          Copy-Item $exe.FullName signpath-staging/rex-setup.exe
+          Copy-Item $msi.FullName signpath-staging/rex.msi
           "EXE_REAL_PATH=$($exe.FullName)" | Out-File $env:GITHUB_ENV -Append
           "MSI_REAL_PATH=$($msi.FullName)" | Out-File $env:GITHUB_ENV -Append
 
@@ -219,8 +219,8 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
           $ErrorActionPreference = "Stop"
-          $signedExe = "signed/terax-setup.exe"
-          $signedMsi = "signed/terax.msi"
+          $signedExe = "signed/rex-setup.exe"
+          $signedMsi = "signed/rex.msi"
           foreach ($f in @($signedExe, $signedMsi)) {
             if (-not (Test-Path $f)) { throw "Signed artifact missing: $f" }
             $sig = Get-AuthenticodeSignature $f

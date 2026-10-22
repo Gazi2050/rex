@@ -886,7 +886,7 @@ const StreamHandler = struct {
                 switch (value.action) {
                     .fresh_line_new_prompt, .prompt_start => try self.emitEvent(.prompt_start, &.{}),
                     .end_prompt_start_input, .end_prompt_start_input_terminate_eol => {
-                        const block_input = [_]u8{@intFromBool(!std.mem.eql(u8, value.options_unvalidated, "terax_blocks=0"))};
+                        const block_input = [_]u8{@intFromBool(!std.mem.eql(u8, value.options_unvalidated, "rex_blocks=0"))};
                         try self.emitEvent(.prompt_end, &.{&block_input});
                     },
                     .end_input_start_output => {

@@ -1,1 +1,1 @@
-TERAX.md
+REX.md

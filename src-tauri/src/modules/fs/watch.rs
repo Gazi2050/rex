@@ -108,7 +108,7 @@ fn start(app: &AppHandle) -> Result<Running, String> {
     let drain_shared = shared.clone();
     let app = app.clone();
     std::thread::Builder::new()
-        .name("terax-fs-watch".into())
+        .name("rex-fs-watch".into())
         .stack_size(256 * 1024)
         .spawn(move || drain_loop(rx, drain_shared, app, index))
         .map_err(|e| e.to_string())?;
