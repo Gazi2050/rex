@@ -277,7 +277,7 @@ export function GeneralSection() {
         </SettingRow>
         <SettingRow
           title="Cursor blinking"
-          description="Blink the terminal cursor. Off by default for lower idle CPU, matching VS Code and the macOS terminal."
+          description="Blink the terminal cursor."
         >
           <Switch
             checked={terminalCursorBlink}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { coerceTerminalCursorStyle } from "./store";
+import { DEFAULT_PREFERENCES, coerceTerminalCursorStyle } from "./store";
 
 describe("coerceTerminalCursorStyle", () => {
   it("keeps terminal cursor styles", () => {
@@ -8,9 +8,11 @@ describe("coerceTerminalCursorStyle", () => {
     }
   });
 
-  it("falls back to bar for invalid persisted values", () => {
-    expect(coerceTerminalCursorStyle("outline")).toBe("bar");
-    expect(coerceTerminalCursorStyle(1)).toBe("bar");
-    expect(coerceTerminalCursorStyle(null)).toBe("bar");
+  it("falls back to the default for invalid persisted values", () => {
+    const fallback = DEFAULT_PREFERENCES.terminalCursorStyle;
+    expect(fallback).toBe("block");
+    for (const value of ["outline", 1, null]) {
+      expect(coerceTerminalCursorStyle(value)).toBe(fallback);
+    }
   });
 });
