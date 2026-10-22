@@ -1458,6 +1458,7 @@ export default function App() {
               <ResizablePanel
                 id="sidebar"
                 panelRef={sidebarRef}
+                groupResizeBehavior="preserve-pixel-size"
                 defaultSize={
                   initialSidebarCollapsed
                     ? "0px"
@@ -1522,7 +1523,12 @@ export default function App() {
                 </div>
               </ResizablePanel>
               <ResizableHandle className="w-1 rounded-full bg-transparent transition-colors duration-[var(--dur-fast)] after:w-4 hover:bg-border" />
-              <ResizablePanel id="workspace" defaultSize="78%" minSize="30%">
+              <ResizablePanel
+                id="workspace"
+                groupResizeBehavior="preserve-relative-size"
+                defaultSize="78%"
+                minSize="30%"
+              >
                 <div className="h-full min-h-0 pl-0.5 pr-2">
                   <div className="rex-pane flex h-full min-h-0 flex-col">
                     <div className="relative min-h-0 flex-1">
