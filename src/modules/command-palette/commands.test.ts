@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
 import type { Tab } from "@/modules/tabs";
+import { describe, expect, it } from "vitest";
 import {
   type CommandPaletteActionContext,
   createCommandItems,
@@ -29,7 +29,6 @@ function baseContext(
     spaces: [],
     activeSpaceId: null,
     openNewTab: noop,
-    openNewBlock: noop,
     openNewPrivate: noop,
     openNewEditor: noop,
     openNewPreview: noop,
@@ -43,6 +42,7 @@ function baseContext(
     toggleSidebar: noop,
     toggleHiddenFiles: noop,
     toggleAi: noop,
+    launchAgents: noop,
     askAiSelection: noop,
     openSettings: noop,
     openKeyboardShortcuts: noop,

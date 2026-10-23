@@ -30,10 +30,10 @@ import {
   setTerminalFontSize,
   setTerminalFontWeight,
   setTerminalLetterSpacing,
-  setTerminalScrollback,
-  setTerminalShell,
   setTerminalRenderer,
   setTerminalScreenReader,
+  setTerminalScrollback,
+  setTerminalShell,
   setZoomLevel,
   TERMINAL_FONT_SIZES,
   TERMINAL_SCROLLBACK_PRESETS,
@@ -462,7 +462,7 @@ export function GeneralSection() {
         </SettingRow>
         <SettingRow
           title="Scrollback"
-          description="Lines of history kept per terminal. Higher uses more RAM (~3 KB / line)."
+          description="Lines of history kept per terminal. Higher uses more RAM (~1.6 KB/line at 200 columns). Applies to terminals opened after the change."
         >
           <Select
             value={String(terminalScrollback)}

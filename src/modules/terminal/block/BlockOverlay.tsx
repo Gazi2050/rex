@@ -1,6 +1,19 @@
 import { homeRelativePath } from "@/lib/homeRelativePath";
+import {
+  NODE_PROBE_COMMAND,
+  nodeUseCommand,
+  nodeVersionsFor,
+  parseNodeProbe,
+  pickNodeManager,
+} from "@/lib/nodeProbe";
+import { quoteShellArg } from "@/lib/shellQuote";
 import "@/modules/terminal/block/block.css";
 
+import {
+  BranchMenuContent,
+  DirectoryMenuContent,
+  NodeMenuContent,
+} from "@/components/chipMenuContents";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,6 +21,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { type GitBranchEntry, native } from "@/modules/ai/lib/native";
 import { useChatStore } from "@/modules/ai/store/chatStore";
 import { writeTerminalClipboard } from "@/modules/terminal/lib/terminalClipboard";
 import {
@@ -24,7 +38,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { homeDir } from "@tauri-apps/api/path";
-import { useEffect, useRef, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { toast } from "sonner";
 import type {
@@ -55,6 +69,8 @@ type Props = {
   clearSearch: () => void;
   promptReady: boolean;
   onRunAgain: (command: string) => void;
+  /** Runs a command in this leaf (header chip actions: cd / checkout / nvm). */
+  onSubmitCommand: (command: string) => void;
   onRestoreFocus: () => void;
 };
 
@@ -175,7 +191,7 @@ function BlockChrome({ block, all, onSearch }: ChromeProps) {
   if (block.running) {
     return (
       <div className="bt-bar" style={{ top: block.headerTop }}>
-        <Meta block={block} />
+        <Meta block={block} onSubmit={all.onSubmitCommand} />
         <div className="bt-tools">
           <LiveDuration startedAt={block.startedAt} />
         </div>
@@ -189,23 +205,191 @@ function BlockChrome({ block, all, onSearch }: ChromeProps) {
         style={{ top: block.bottom }}
       />
       <div className="bt-bar" style={{ top: block.headerTop }}>
-        <Meta block={block} />
+        <Meta block={block} onSubmit={all.onSubmitCommand} />
         <Toolbar block={block} all={all} onSearch={onSearch} />
       </div>
     </>
   );
 }
 
-function Meta({ block }: { block: PositionedBlock }) {
+function Meta({
+  block,
+  onSubmit,
+}: {
+  block: PositionedBlock;
+  onSubmit: (command: string) => void;
+}) {
   return (
     <span className="bt-head-meta">
-      {block.cwd && (
-        <span className="bt-cwd">
-          {homeRelativePath(block.cwd, cachedHome)}
-        </span>
+      {block.nodeVersion && (
+        <HeaderNodeMenu
+          version={block.nodeVersion}
+          cwd={block.cwd}
+          onSubmit={onSubmit}
+        />
+      )}
+      <HeaderDirectoryMenu cwd={block.cwd} onSubmit={onSubmit} />
+      {block.gitBranch && (
+        <HeaderBranchMenu
+          branch={block.gitBranch}
+          cwd={block.cwd}
+          onSubmit={onSubmit}
+        />
       )}
       <span className="bt-clock">{fmtTime(block.startedAt)}</span>
     </span>
+  );
+}
+
+/** Link-styled header value that opens a lazily-loaded menu. */
+function HeaderMenu({
+  label,
+  title,
+  className,
+  onOpenChange,
+  children,
+}: {
+  label: string;
+  title: string;
+  className?: string;
+  onOpenChange?: (open: boolean) => void;
+  children?: ReactNode;
+}) {
+  return (
+    <DropdownMenu onOpenChange={onOpenChange}>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          title={title}
+          className={cn("bt-chip", className)}
+        >
+          {label}
+        </button>
+      </DropdownMenuTrigger>
+      {children && (
+        <DropdownMenuContent align="start" className="min-w-52 max-w-72">
+          {children}
+        </DropdownMenuContent>
+      )}
+    </DropdownMenu>
+  );
+}
+
+function HeaderNodeMenu({
+  version,
+  cwd,
+  onSubmit,
+}: {
+  version: string;
+  cwd: string;
+  onSubmit: (command: string) => void;
+}) {
+  const [menu, setMenu] = useState<{
+    manager: "fnm" | "nvm";
+    versions: string[];
+  } | null>(null);
+  return (
+    <HeaderMenu
+      label={version}
+      title={`Node ${version} — click to switch`}
+      onOpenChange={(open) => {
+        if (!open || menu) return;
+        void native
+          .runCommand(NODE_PROBE_COMMAND, cwd, 5)
+          .then((out) => {
+            const env = parseNodeProbe(out.stdout);
+            const manager = pickNodeManager(env, version);
+            if (manager)
+              setMenu({ manager, versions: nodeVersionsFor(env, manager) });
+          })
+          .catch(() => {});
+      }}
+    >
+      {menu && (
+        <NodeMenuContent
+          manager={menu.manager}
+          versions={menu.versions}
+          current={version}
+          onUse={(next) => onSubmit(nodeUseCommand(menu.manager, next))}
+        />
+      )}
+    </HeaderMenu>
+  );
+}
+
+function HeaderDirectoryMenu({
+  cwd,
+  onSubmit,
+}: {
+  cwd: string;
+  onSubmit: (command: string) => void;
+}) {
+  const [dirs, setDirs] = useState<string[] | null>(null);
+  return (
+    <HeaderMenu
+      label={homeRelativePath(cwd, cachedHome)}
+      title={`${cwd} — click to navigate`}
+      className="bt-cwd"
+      onOpenChange={(open) => {
+        if (!open || dirs) return;
+        void native
+          .readDir(cwd)
+          .then((entries) =>
+            setDirs(
+              entries
+                .filter((entry) => entry.kind === "dir")
+                .map((entry) => entry.name),
+            ),
+          )
+          .catch(() => setDirs([]));
+      }}
+    >
+      {dirs && (
+        <DirectoryMenuContent
+          entries={dirs}
+          onCd={(name) => onSubmit(`cd ${quoteShellArg(name)}`)}
+        />
+      )}
+    </HeaderMenu>
+  );
+}
+
+function HeaderBranchMenu({
+  branch,
+  cwd,
+  onSubmit,
+}: {
+  branch: string;
+  cwd: string;
+  onSubmit: (command: string) => void;
+}) {
+  const [branches, setBranches] = useState<GitBranchEntry[] | null>(null);
+  return (
+    <HeaderMenu
+      label={`git:(${branch})`}
+      title={`Branch ${branch} — click to switch`}
+      onOpenChange={(open) => {
+        if (!open || branches) return;
+        void native
+          .gitResolveRepo(cwd)
+          .then((repo) =>
+            repo
+              ? native
+                  .gitListBranches(repo.repoRoot)
+                  .then((list) => setBranches(list.branches))
+              : setBranches([]),
+          )
+          .catch(() => setBranches([]));
+      }}
+    >
+      {branches && (
+        <BranchMenuContent
+          entries={branches}
+          current={branch}
+          onCheckout={(name) => onSubmit(`git checkout ${quoteShellArg(name)}`)}
+        />
+      )}
+    </HeaderMenu>
   );
 }
 

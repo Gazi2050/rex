@@ -40,7 +40,6 @@ export type CommandPaletteActionContext = {
   explorerRoot: string | null;
   home: string | null;
   openNewTab: () => void;
-  openNewBlock: () => void;
   openNewPrivate: () => void;
   openNewEditor: () => void;
   openNewPreview: () => void;
@@ -55,6 +54,8 @@ export type CommandPaletteActionContext = {
   toggleHiddenFiles: () => void;
   toggleAi: () => void;
   askAiSelection: () => void;
+  /** Open the agent launcher (the `+` menu no longer hosts it). */
+  launchAgents: () => void;
   openSettings: () => void;
   openKeyboardShortcuts: () => void;
   spaces: { id: string; name: string }[];
@@ -114,7 +115,14 @@ export function createCommandItems(
       id: "spaces.overview",
       title: "Spaces: Overview",
       group: "Spaces",
-      keywords: ["spaces", "sessions", "overview", "organize", "manage", "move"],
+      keywords: [
+        "spaces",
+        "sessions",
+        "overview",
+        "organize",
+        "manage",
+        "move",
+      ],
       icon: DashboardSquare01Icon,
       run: ctx.openSpacesOverview,
     },
@@ -132,8 +140,7 @@ export function createCommandItems(
       group: "Spaces" as const,
       keywords: ["space", "switch", "session", sp.name],
       icon: DashboardSquare01Icon,
-      disabledReason:
-        sp.id === ctx.activeSpaceId ? "Current space" : undefined,
+      disabledReason: sp.id === ctx.activeSpaceId ? "Current space" : undefined,
       run: () => ctx.switchSpace(sp.id),
     })),
     {
@@ -144,14 +151,6 @@ export function createCommandItems(
       icon: TerminalIcon,
       shortcutId: "tab.new",
       run: ctx.openNewTab,
-    },
-    {
-      id: "tab.newBlock",
-      title: "New block terminal",
-      group: "Tabs",
-      keywords: ["blocks", "warp", "command blocks", "terminal"],
-      icon: DashboardSquare01Icon,
-      run: ctx.openNewBlock,
     },
     {
       id: "tab.newPrivate",
@@ -301,6 +300,14 @@ export function createCommandItems(
       icon: SparklesIcon,
       shortcutId: "ai.askSelection",
       run: ctx.askAiSelection,
+    },
+    {
+      id: "ai.launchAgents",
+      title: "Launch agents…",
+      group: "AI",
+      keywords: ["agent", "claude", "codex", "gemini", "new agent tab"],
+      icon: SparklesIcon,
+      run: ctx.launchAgents,
     },
   ];
 }

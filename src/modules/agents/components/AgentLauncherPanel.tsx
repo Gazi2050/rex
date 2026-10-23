@@ -23,7 +23,8 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useRef, useState } from "react";
 
 type Props = {
-  onBack: () => void;
+  /** Omitted when the panel is hosted outside the new-tab menu (e.g. a dialog). */
+  onBack?: () => void;
   onLaunch: (request: AgentLaunchRequest) => void;
 };
 
@@ -106,16 +107,22 @@ export function AgentLauncherPanel({ onBack, onLaunch }: Props) {
       }}
     >
       <div className="flex h-9 items-center gap-2 px-1">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-xs"
-          className="rounded-md text-muted-foreground"
-          onClick={onBack}
-          aria-label="Back to new tab menu"
-        >
-          <HugeiconsIcon icon={ArrowLeft01Icon} size={14} strokeWidth={1.75} />
-        </Button>
+        {onBack && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-xs"
+            className="rounded-md text-muted-foreground"
+            onClick={onBack}
+            aria-label="Back to new tab menu"
+          >
+            <HugeiconsIcon
+              icon={ArrowLeft01Icon}
+              size={14}
+              strokeWidth={1.75}
+            />
+          </Button>
+        )}
         <div className="min-w-0">
           <div className="text-[13px] font-medium text-foreground">
             Launch agents

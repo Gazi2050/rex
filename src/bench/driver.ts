@@ -1,10 +1,10 @@
-import { invoke } from "@tauri-apps/api/core";
 import { setWindowVibrancy } from "@/modules/settings/store";
 import { whenSessionReady, writeToSession } from "@/modules/terminal";
 import {
   readTerminalClipboard,
   writeTerminalClipboard,
 } from "@/modules/terminal/lib/terminalClipboard";
+import { invoke } from "@tauri-apps/api/core";
 import { collectDiagnostics } from "./diagnostics";
 import { nativeWindow, reportError, reportPhase } from "./report";
 import { installSmoothProbe, type SmoothSummary } from "./smoothProbe";
@@ -198,11 +198,9 @@ class ScenarioRun {
     return { tabId, leafId: leafIds[0] };
   }
 
-  async newShellTab(
-    blocks = false,
-  ): Promise<{ tabId: number; leafId: number }> {
+  async newShellTab(): Promise<{ tabId: number; leafId: number }> {
     const cwd = this.scenario.cwds?.shell;
-    const tabId = blocks ? this.app().newBlockTab(cwd) : this.app().newTab(cwd);
+    const tabId = this.app().newTab(cwd);
     await this.waitFor(
       () => this.app().tabs.some((t) => t.id === tabId),
       "new tab",
@@ -340,7 +338,7 @@ async function tabsScenario(run: ScenarioRun): Promise<void> {
   for (let index = 1; index < kinds.length; index++) {
     const kind = kinds[index];
     if (kind === "s" || kind === "b") {
-      const tab = await run.newShellTab(kind === "b");
+      const tab = await run.newShellTab();
       order.push(tab.tabId);
       leaves.push([tab.leafId]);
     } else {
@@ -461,7 +459,12 @@ async function splitLayout(
   if (kinds[1] === "s") await fill(second, false);
   else await run.startAgent(second, "--history 3000");
   await pause(2000);
-  return { tabId: first.tabId, leaves: [first.leafId, second], dir, promptMarker };
+  return {
+    tabId: first.tabId,
+    leaves: [first.leafId, second],
+    dir,
+    promptMarker,
+  };
 }
 
 /** Copies of the shell prompt and of the agent's live region in the scrollback of both panes. */
@@ -586,7 +589,10 @@ async function dragWithPointer(
       if (wait > 0) await pause(wait);
       const now = performance.now();
       lateMax = Math.max(lateMax, now - due);
-      index = Math.min(events, Math.max(index + 1, Math.floor(((now - began) * hz) / 1000)));
+      index = Math.min(
+        events,
+        Math.max(index + 1, Math.floor(((now - began) * hz) / 1000)),
+      );
       fire("pointermove", document, position(index), 1);
       sent += 1;
     }
@@ -636,7 +642,9 @@ async function splitDragScenario(run: ScenarioRun): Promise<void> {
     const vertical = layout.dir === "col";
     const x0 = rect.left + rect.width / 2;
     const y0 = rect.top + rect.height / 2;
-    const room = vertical ? el.parentElement?.clientHeight ?? 600 : el.parentElement?.clientWidth ?? 1000;
+    const room = vertical
+      ? (el.parentElement?.clientHeight ?? 600)
+      : (el.parentElement?.clientWidth ?? 1000);
     const swing = room * amplitude;
     const events = Math.round(seconds * hz);
     // Alternating drift: the divider never creeps toward its limit over the cycles.
@@ -648,9 +656,7 @@ async function splitDragScenario(run: ScenarioRun): Promise<void> {
       const offset =
         swing * Math.sin((2 * Math.PI * index) / (hz * (seconds / 2))) * ease +
         drift * swing * (index / events);
-      return vertical
-        ? { x: x0, y: y0 + offset }
-        : { x: x0 + offset, y: y0 };
+      return vertical ? { x: x0, y: y0 + offset } : { x: x0 + offset, y: y0 };
     };
     const { result: drag, smooth } = await smoothly(() =>
       dragWithPointer(el, position, events, hz),

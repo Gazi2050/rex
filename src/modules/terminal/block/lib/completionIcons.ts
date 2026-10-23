@@ -1,10 +1,3 @@
-import {
-  CommandLineIcon,
-  File01Icon,
-  Folder01Icon,
-  TerminalIcon,
-} from "@hugeicons/core-free-icons";
-
 export type IconData = readonly (readonly [string, Record<string, unknown>])[];
 
 const NS = "http://www.w3.org/2000/svg";
@@ -25,20 +18,4 @@ export function hugeIcon(icon: IconData, size = 13): SVGSVGElement {
     svg.appendChild(el);
   }
   return svg;
-}
-
-const ICON_BY_TYPE: Record<string, IconData> = {
-  function: TerminalIcon,
-  keyword: CommandLineIcon,
-  type: Folder01Icon,
-  variable: File01Icon,
-};
-
-export function completionIcon(type: string | undefined): HTMLElement | null {
-  const data = type ? ICON_BY_TYPE[type] : undefined;
-  if (!data) return null;
-  const span = document.createElement("span");
-  span.className = "cm-opt-icon";
-  span.appendChild(hugeIcon(data));
-  return span;
 }

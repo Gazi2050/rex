@@ -1,4 +1,3 @@
-import type { GhosttyTerminalEvent } from "@rex/ghostty-core/protocol";
 import type {
   BlockContext,
   BlockMatch,
@@ -7,6 +6,7 @@ import type {
 } from "@/modules/terminal/block/lib/blockTypes";
 import type { BlockMode } from "@/modules/terminal/block/lib/modeMachine";
 import type { GhosttyTerminalModelApi } from "@/modules/terminal/ghostty/GhosttyTerminalModel";
+import type { GhosttyTerminalEvent } from "@rex/ghostty-core/protocol";
 
 const MAX_BLOCKS = 1000;
 const MAX_METADATA_UNITS = 256 * 1024;
@@ -28,6 +28,8 @@ type Entry = {
   command: string;
   canRerun: boolean;
   cwd: string;
+  nodeVersion: string | null;
+  gitBranch: string | null;
   start: number;
   end: number | null;
   exitCode: number | null;
@@ -86,7 +88,14 @@ export class GhosttyBlocks {
     this.pendingCommandComplete = command.length <= 8192;
   }
 
-  handle(event: GhosttyTerminalEvent, cwd: string): void {
+  handle(
+    event: GhosttyTerminalEvent,
+    cwd: string,
+    env: { node: string | null; branch: string | null } = {
+      node: null,
+      branch: null,
+    },
+  ): void {
     if (
       event.type === "end-of-input" ||
       event.type === "end-of-command" ||
@@ -116,6 +125,8 @@ export class GhosttyBlocks {
         command,
         canRerun,
         cwd: cwd.slice(0, 32_768),
+        nodeVersion: env.node,
+        gitBranch: env.branch,
         start: event.marker,
         end: null,
         exitCode: null,
@@ -123,14 +134,22 @@ export class GhosttyBlocks {
         finishedAt: 0,
       };
       this.entries.push(this.live);
-      this.metadataUnits += this.live.command.length + this.live.cwd.length;
+      this.metadataUnits +=
+        this.live.command.length +
+        this.live.cwd.length +
+        (this.live.nodeVersion?.length ?? 0) +
+        (this.live.gitBranch?.length ?? 0);
       while (
         this.entries.length > MAX_BLOCKS ||
         this.metadataUnits > MAX_METADATA_UNITS
       ) {
         const removed = this.entries.shift();
         if (!removed) break;
-        this.metadataUnits -= removed.command.length + removed.cwd.length;
+        this.metadataUnits -=
+          removed.command.length +
+          removed.cwd.length +
+          (removed.nodeVersion?.length ?? 0) +
+          (removed.gitBranch?.length ?? 0);
       }
     } else if (event.type === "end-of-command") {
       this.phase = "prompt";
@@ -243,6 +262,8 @@ export class GhosttyBlocks {
         command: entry.command,
         canRerun: entry.canRerun,
         cwd: entry.cwd,
+        nodeVersion: entry.nodeVersion,
+        gitBranch: entry.gitBranch,
         exitCode: entry.exitCode,
         running: entry.end === null,
         ok: entry.exitCode === null || entry.exitCode === 0,

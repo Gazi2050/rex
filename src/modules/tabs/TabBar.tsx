@@ -15,7 +15,6 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { AgentIcon } from "@/modules/agents/lib/agentIcon";
-import type { AgentLaunchRequest } from "@/modules/agents/lib/launcher";
 import {
   ALL_LANGUAGES,
   EXPOSED_LANGUAGES,
@@ -67,12 +66,8 @@ type Props = {
   activeId: number;
   onSelect: (id: number) => void;
   onNew: () => void;
-  onNewBlock: () => void;
-  onNewPrivate: () => void;
-  onNewPreview: () => void;
   onNewEditor: () => void;
   onNewGitGraph: () => void;
-  onLaunchAgents: (request: AgentLaunchRequest) => void;
   onClose: (id: number) => void;
   /** Chrome-style: close every tab to the right of the given tab. */
   onCloseTabsToRight: (id: number) => void;
@@ -156,12 +151,8 @@ export function TabBar({
   activeId,
   onSelect,
   onNew,
-  onNewBlock,
-  onNewPrivate,
-  onNewPreview,
   onNewEditor,
   onNewGitGraph,
-  onLaunchAgents,
   onClose,
   onCloseTabsToRight,
   onCloseOtherTabs,
@@ -745,12 +736,8 @@ export function TabBar({
         </Tabs>
         <NewTabMenu
           onNew={onNew}
-          onNewBlock={onNewBlock}
-          onNewPrivate={onNewPrivate}
-          onNewPreview={onNewPreview}
           onNewEditor={onNewEditor}
           onNewGitGraph={onNewGitGraph}
-          onLaunchAgents={onLaunchAgents}
         />
       </div>
     </div>

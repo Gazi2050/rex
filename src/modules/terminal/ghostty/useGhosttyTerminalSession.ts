@@ -1,15 +1,16 @@
-import { loadSessionRenderer } from "@/modules/terminal/ghostty/loadSessionRenderer";
-import {
-  ensureGhosttyBlocks,
-  ghosttyBlocks,
-  disposeGhosttyBlocks,
-} from "@/modules/terminal/ghostty/ghosttyBlockSessions";
-import { initializeSessionGeneration as startSessionInitialization } from "@/modules/terminal/ghostty/sessionInitialization";
-import { replaceSessionSurface } from "@/modules/terminal/ghostty/replaceSessionSurface";
 import { openExternalUrl } from "@/lib/external-link";
 import { ensureMonoFontsLoaded, resolveFontFamily } from "@/lib/fonts";
 import { usePreferencesStore } from "@/modules/settings/preferences";
 import type { TerminalBackendKind } from "@/modules/terminal/backend/contracts";
+import {
+  disposeGhosttyBlocks,
+  ensureGhosttyBlocks,
+  ghosttyBlocks,
+} from "@/modules/terminal/ghostty/ghosttyBlockSessions";
+import { loadSessionRenderer } from "@/modules/terminal/ghostty/loadSessionRenderer";
+import { replaceSessionSurface } from "@/modules/terminal/ghostty/replaceSessionSurface";
+import { initializeSessionGeneration as startSessionInitialization } from "@/modules/terminal/ghostty/sessionInitialization";
+import { LatestClipboardWrite } from "@/modules/terminal/lib/LatestClipboardWrite";
 import { setLeafPresentation } from "@/modules/terminal/lib/ptyPresentation";
 import { PtyResizeDelivery } from "@/modules/terminal/lib/ptyResizeDelivery";
 import { useTerminalFont } from "@/modules/terminal/lib/useTerminalFont";
@@ -18,8 +19,13 @@ import { invoke } from "@tauri-apps/api/core";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { openPty, type PtySession } from "../lib/pty-bridge";
 import { writeTerminalClipboard } from "../lib/terminalClipboard";
-import { LatestClipboardWrite } from "@/modules/terminal/lib/LatestClipboardWrite";
+import {
+  forgetLeafNodeEnv,
+  getLeafNodeEnv,
+  setLeafNodeEnv,
+} from "../lib/terminalEnvStore";
 import { GhosttySemanticEventRouter } from "./core/GhosttySemanticEventRouter";
+import { createEnvScanner, type EnvScanner } from "./envScanner";
 import { getGhosttyCoreRuntime } from "./GhosttyCoreRuntime";
 import type { GhosttyTerminalModelApi } from "./GhosttyTerminalModel";
 import {
@@ -28,11 +34,16 @@ import {
   rgbToInt,
   type TerminalFontSpec,
 } from "./gpu/terminalVisuals";
-import { getWebGpuTerminalRuntime } from "./gpu/WebGpuTerminalRuntime";
-import { webGpuTerminalRuntimeDiagnostics } from "./gpu/WebGpuTerminalRuntime";
+import {
+  getWebGpuTerminalRuntime,
+  webGpuTerminalRuntimeDiagnostics,
+} from "./gpu/WebGpuTerminalRuntime";
 import { WebGpuTerminalSurface } from "./gpu/WebGpuTerminalSurface";
 import { GhosttyInputController } from "./input/GhosttyInputController";
-import { encodeTerminalSubmission } from "./input/terminalInputEncoding";
+import {
+  encodeTerminalPaste,
+  encodeTerminalSubmission,
+} from "./input/terminalInputEncoding";
 import type {
   WebGlTerminalSurface,
   WebGlTerminalSurfaceOptions,
@@ -64,6 +75,8 @@ type GhosttySession = {
   readonly backend: GhosttyBackend;
   initialCwd: string | undefined;
   lastCwd: string | null;
+  /** Consumes the PTY stream before the VT; reports shell env + strips markers. */
+  envScanner: EnvScanner;
   model: GhosttyTerminalModelApi | null;
   surface: GhosttySurface | null;
   surfaceOptions: GhosttySurfaceBaseOptions | null;
@@ -73,6 +86,8 @@ type GhosttySession = {
   writer: BoundedPtyWriter;
   container: HTMLDivElement | null;
   callbacks: Callbacks;
+  /** Per-presented-frame listeners (terminal scrollbar metrics). */
+  frameListeners: Set<() => void>;
   visible: boolean;
   focused: boolean;
   startupError: string | null;
@@ -394,6 +409,42 @@ export async function ghosttyLeafHasForegroundProcess(
   }
 }
 
+/** The live model for a leaf, if its session is up. */
+export function ghosttyModelForLeaf(
+  leafId: number,
+): GhosttyTerminalModelApi | null {
+  return sessions.get(leafId)?.model ?? null;
+}
+
+/** Fires on every presented frame (scroll/repaint) and once at attach. The
+ *  session may not exist yet when a child effect runs before the pane's —
+ *  retry per frame until it does. */
+export function subscribeGhosttyFrame(
+  leafId: number,
+  listener: () => void,
+): () => void {
+  let unsubscribe: (() => void) | null = null;
+  let raf = 0;
+  let cancelled = false;
+  const attach = () => {
+    if (cancelled) return;
+    const session = sessions.get(leafId);
+    if (!session) {
+      raf = requestAnimationFrame(attach);
+      return;
+    }
+    session.frameListeners.add(listener);
+    unsubscribe = () => session.frameListeners.delete(listener);
+    listener();
+  };
+  attach();
+  return () => {
+    cancelled = true;
+    cancelAnimationFrame(raf);
+    unsubscribe?.();
+  };
+}
+
 export function disposeGhosttySession(leafId: number): boolean {
   const session = sessions.get(leafId);
   if (!session) return false;
@@ -402,6 +453,7 @@ export function disposeGhosttySession(leafId: number): boolean {
   session.input?.dispose();
   session.surface?.dispose();
   disposeGhosttyBlocks(leafId);
+  forgetLeafNodeEnv(leafId);
   session.model?.dispose();
   session.ptyResize.reset();
   session.writer.dispose();
@@ -536,6 +588,7 @@ function ensureSession(
     backend,
     initialCwd,
     lastCwd: null,
+    envScanner: createEnvScanner((update) => setLeafNodeEnv(leafId, update)),
     model: null,
     surface: null,
     surfaceOptions: null,
@@ -547,6 +600,7 @@ function ensureSession(
     }),
     container: null,
     callbacks: {},
+    frameListeners: new Set(),
     visible: false,
     focused: false,
     startupError: null,
@@ -676,6 +730,7 @@ async function initializeSessionGeneration(
       ghosttyBlocks(session.leafId)?.controller?.handle(
         event,
         session.lastCwd ?? session.initialCwd ?? "",
+        getLeafNodeEnv(session.leafId),
       );
     },
   });
@@ -711,7 +766,10 @@ async function initializeSessionGeneration(
       session.ptyResize.send(cols, rows);
     },
     onFirstFrame: () => mark("firstFrameMs"),
-    onFrame: () => ghosttyBlocks(session.leafId)?.present(),
+    onFrame: () => {
+      ghosttyBlocks(session.leafId)?.present();
+      for (const listener of session.frameListeners) listener();
+    },
     onRequestFocus: () => focusGhosttySession(session.leafId),
     onOpenLink: (uri: string) => {
       void openExternalUrl(uri, () => focusGhosttySession(session.leafId));
@@ -803,7 +861,7 @@ async function initializeSessionGeneration(
       onData: (bytes) => {
         if (!session.disposed && generation === session.generation) {
           mark("firstOutputMs");
-          model.write(bytes);
+          model.write(session.envScanner.feed(bytes));
           ghosttyBlocks(session.leafId)?.changed();
         }
       },
@@ -847,6 +905,10 @@ function createGhosttyInput(
     blocks.paste(text);
     return true;
   };
+  // The grid is view-only for block terminals: the shell input is the only
+  // keyboard surface. Surface keystrokes (typing, Ctrl+C SIGINT, paste) are
+  // dropped in every mode; shortest job: gate the writer path on blocks.
+  const viewOnly = !!ghosttyBlocks(session.leafId);
   return new GhosttyInputController({
     model,
     input: surface.inputElement(),
@@ -857,6 +919,7 @@ function createGhosttyInput(
     }),
     gridShiftY: () => surface.gridShiftY(),
     onData: (bytes) => {
+      if (viewOnly) return;
       if (
         ghosttyBlocks(session.leafId)?.getMode() === "prompt" &&
         !(bytes.length === 1 && bytes[0] === 3)
@@ -865,26 +928,52 @@ function createGhosttyInput(
       session.writer.enqueue(bytes);
     },
     onKeyDown: (event) => {
+      if (viewOnly && ghosttyBlocks(session.leafId)?.getMode() !== "prompt")
+        return false;
       const blocks = ghosttyBlocks(session.leafId);
       return (
         blocks?.getMode() === "prompt" && (blocks.keyDown?.(event) ?? false)
       );
     },
-    onText: insertPromptText,
-    onPaste: insertPromptText,
+    onText: viewOnly ? () => false : insertPromptText,
+    onPaste: viewOnly ? () => false : insertPromptText,
     getSelection: () => surface.getSelection(),
-    onCopy: () => {
-      const text = surface.getSelection();
-      if (!text) return false;
-      void writeTerminalClipboard(text).catch(() => {});
-      return true;
-    },
+    // Copy-to-clipboard for a grid selection also stays mouse-driven (context
+    // menu / toolbar); Ctrl+C does nothing unless the shell input is focused.
+    onCopy: viewOnly
+      ? () => false
+      : () => {
+          const text = surface.getSelection();
+          if (!text) return false;
+          void writeTerminalClipboard(text).catch(() => {});
+          return true;
+        },
   });
 }
 
 export function focusGhosttySession(leafId: number): void {
   const session = sessions.get(leafId);
   if (session) focusSessionSurface(session, session.surface);
+}
+
+/** Delivers pre-encoded key/paste bytes straight to the PTY — the raw-keyboard
+ *  path for the shell input while a foreground program owns the terminal. */
+export function writeBytesToLeaf(leafId: number, bytes: Uint8Array): boolean {
+  const session = sessions.get(leafId);
+  if (!session || session.shellExited || session.disposed) return false;
+  return session.writer.enqueue(bytes);
+}
+
+export function pasteRawToGhosttySession(
+  leafId: number,
+  text: string,
+): boolean {
+  const session = sessions.get(leafId);
+  if (!session || session.shellExited || session.disposed) return false;
+  const bracketed = session.model?.modes().bracketedPaste ?? false;
+  return session.writer.enqueue(
+    new TextEncoder().encode(encodeTerminalPaste(text, bracketed)),
+  );
 }
 
 function focusSessionSurface(

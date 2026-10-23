@@ -14,10 +14,12 @@ import {
 import type { TerminalBackendKind } from "./backend/contracts";
 import { resolvedTerminalBackend } from "./backend/selection";
 import { ghosttyBlocks } from "./ghostty/ghosttyBlockSessions";
+import { TerminalScrollbar } from "./ghostty/TerminalScrollbar";
 import {
   ghosttyBlockGeometry,
   useGhosttyTerminalSession,
 } from "./ghostty/useGhosttyTerminalSession";
+import { focusLeafInput } from "./lib/terminalSessionApi";
 
 export type TerminalPaneHandle = {
   write: (data: string) => void;
@@ -129,6 +131,13 @@ const GhosttyTerminalPane = memo(
         onPointerUp={
           blocks
             ? (event) => {
+                // Scrollbar clicks are drags, not block selection or focus.
+                if (
+                  (event.target as HTMLElement | null)?.closest(
+                    "[data-terminal-scrollbar]",
+                  )
+                )
+                  return;
                 const origin = down.current;
                 down.current = null;
                 const state = ghosttyBlocks(leafId);
@@ -151,14 +160,13 @@ const GhosttyTerminalPane = memo(
                       state.model.bufferLineAtViewportRow(row),
                     );
                 }
-                // Only the terminal surface takes focus back. Block chrome
-                // (toolbar menus, search bar) lives in this pane too, and
-                // refocusing on those clicks dismisses open menus.
+                // Clicks land focus in the input — the keyboard surface for
+                // every mode (raw keys while a program runs).
                 if (
-                  state?.getMode() === "prompt" &&
+                  state &&
                   containerRef.current?.contains(event.target as Node)
                 )
-                  state.focus?.();
+                  focusLeafInput(leafId);
               }
             : undefined
         }
@@ -180,6 +188,7 @@ const GhosttyTerminalPane = memo(
             <GhosttyBlockOverlay leafId={leafId} />
           </Suspense>
         )}
+        <TerminalScrollbar leafId={leafId} />
         {session.error && (
           <div
             role="alert"

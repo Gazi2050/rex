@@ -10,6 +10,10 @@ export type PositionedBlock = {
   command: string;
   canRerun: boolean;
   cwd: string;
+  /** Shell-reported node version when the command started, if known. */
+  nodeVersion: string | null;
+  /** Shell-reported git branch/sha when the command started, if known. */
+  gitBranch: string | null;
   exitCode: number | null;
   running: boolean;
   ok: boolean;

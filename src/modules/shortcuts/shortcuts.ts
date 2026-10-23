@@ -8,7 +8,6 @@ export type ShortcutId =
   | "commandPalette.open"
   | "commandPalette.content"
   | "tab.new"
-  | "tab.newBlock"
   | "tab.newPrivate"
   | "tab.newPreview"
   | "tab.newEditor"
@@ -103,12 +102,6 @@ export const SHORTCUTS: Shortcut[] = [
     label: "New tab",
     group: "Tabs",
     defaultBindings: [{ [MOD_PROP]: true, key: "t" }],
-  },
-  {
-    id: "tab.newBlock",
-    label: "New Blocks terminal",
-    group: "Tabs",
-    defaultBindings: [{ [MOD_PROP]: true, shift: true, key: "t" }],
   },
   {
     id: "tab.newPrivate",
@@ -432,7 +425,7 @@ function keyFromCode(code: string): string | null {
 export function matchBinding(
   e: KeyboardEvent,
   binding: KeyBinding,
-  id?: ShortcutId
+  id?: ShortcutId,
 ): boolean {
   const eventKey = e.key.toLowerCase();
   const bindingKey = binding.key.toLowerCase();

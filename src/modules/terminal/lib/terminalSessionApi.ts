@@ -1,29 +1,35 @@
 import type { BlockMode } from "@/modules/terminal/block/lib/modeMachine";
 import {
+  disposeGhosttyBlocks,
+  ensureGhosttyBlocks,
+  ghosttyBlocks,
+} from "@/modules/terminal/ghostty/ghosttyBlockSessions";
+import { encodeRawKey } from "@/modules/terminal/ghostty/input/GhosttyInputController";
+import {
   clearGhosttySession,
   disposeGhosttySession,
   focusGhosttySession,
+  ghosttyCwdForLeaf,
   ghosttyFocusedLeaf,
   ghosttyLeafHasForegroundProcess,
   ghosttyLeafIdForPty,
-  ghosttyCwdForLeaf,
+  ghosttyModelForLeaf,
   ghosttyPtyIdForLeaf,
   ghosttySelectionForLeaf,
   hasGhosttySession,
   interruptGhosttySession,
   pasteIntoGhosttySession,
+  pasteRawToGhosttySession,
   submitToGhosttySession,
   whenGhosttySessionReady,
+  writeBytesToLeaf,
   writeToGhosttySession,
 } from "@/modules/terminal/ghostty/useGhosttyTerminalSession";
-import {
-  disposeGhosttyBlocks,
-  ensureGhosttyBlocks,
-  ghosttyBlocks,
-} from "@/modules/terminal/ghostty/ghosttyBlockSessions";
+
 export type { WatermarkState } from "@/modules/terminal/ghostty/ghosttyBlockSessions";
-import { forgetLeafPresentation } from "@/modules/terminal/lib/ptyPresentation";
+
 import type { WatermarkState } from "@/modules/terminal/ghostty/ghosttyBlockSessions";
+import { forgetLeafPresentation } from "@/modules/terminal/lib/ptyPresentation";
 
 export async function whenSessionReady(
   leafId: number,
@@ -113,8 +119,29 @@ export function setLeafInputKeyDown(
 
 export function focusLeafInput(leafId: number): void {
   const state = ghosttyBlocks(leafId);
-  if (state?.getMode() === "prompt" && state.focus) state.focus();
+  // The shell input is the keyboard surface for block terminals in every
+  // mode (raw keys while a program runs), so prefer it whenever registered.
+  if (state?.focus) state.focus();
   else focusGhosttySession(leafId);
+}
+
+/** Forwards one keydown to the leaf's PTY, encoded exactly like the grid
+ *  surface used to (app-cursor sequences, ctrl codes). False when the key
+ *  produces no input or no live session — lets CM handle it instead. */
+export function sendRawKeyToLeaf(
+  leafId: number,
+  event: KeyboardEvent,
+): boolean {
+  const model = ghosttyModelForLeaf(leafId);
+  if (!model) return false;
+  const bytes = encodeRawKey(event, model);
+  if (!bytes) return false;
+  return writeBytesToLeaf(leafId, bytes);
+}
+
+/** Paste during raw mode: bracketed when the program asked for it, no \r. */
+export function pasteRawToLeaf(leafId: number, text: string): boolean {
+  return pasteRawToGhosttySession(leafId, text);
 }
 
 export function getLeafDraft(leafId: number): string {

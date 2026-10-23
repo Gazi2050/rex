@@ -1,4 +1,11 @@
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
@@ -12,6 +19,7 @@ import { usePresence } from "@/lib/usePresence";
 import { useZoom } from "@/lib/useZoom";
 import { isMarkdownPath } from "@/lib/utils";
 import {
+  AgentLauncherPanel,
   type AgentLaunchRequest,
   AgentNotificationsBridge,
   findAgentLauncher,
@@ -75,8 +83,8 @@ import {
 } from "@/modules/spaces";
 import { StatusBar } from "@/modules/statusbar";
 import {
-  TabSwitcherHud,
   type CloseTabsPlan,
+  TabSwitcherHud,
   useTabSwitcher,
   useTabs,
   useWindowTitle,
@@ -99,9 +107,9 @@ import {
   whenSessionReady,
   writeToSession,
 } from "@/modules/terminal";
-import type { TerminalSearchController } from "@/modules/terminal/search/TerminalSearchController";
 import { bindTerminalWindowFocus } from "@/modules/terminal/ghostty/renderScheduling";
 import { subscribeWindowPresentation } from "@/modules/terminal/ghostty/windowPresentation";
+import type { TerminalSearchController } from "@/modules/terminal/search/TerminalSearchController";
 import {
   LivePageResizeBridge,
   ThemeProvider,
@@ -134,12 +142,12 @@ import {
   WorkspaceInputBar,
 } from "./components/WorkspaceInputBar";
 import { WorkspaceSurface } from "./components/WorkspaceSurface";
-import { useAppCloseGuard } from "./hooks/useAppCloseGuard";
 import {
   hasOpenPathTab,
   renamedPath,
   spacesEmptiedByTabs,
 } from "./hooks/tabCloseGuards";
+import { useAppCloseGuard } from "./hooks/useAppCloseGuard";
 import { useTabCloseGuards } from "./hooks/useTabCloseGuards";
 import { useWorkspaceSwitcher } from "./hooks/useWorkspaceSwitcher";
 
@@ -165,7 +173,6 @@ export default function App() {
     markBooted,
     setActiveSpaceForNewTabs,
     newTab,
-    newBlockTab,
     newAgentTab,
     newAgentGroupTab,
     newPrivateTab,
@@ -338,6 +345,7 @@ export default function App() {
   } = useSidebarPanel(explorerRef);
 
   const [newEditorOpen, setNewEditorOpen] = useState(false);
+  const [agentLauncherOpen, setAgentLauncherOpen] = useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [paletteInitialMode, setPaletteInitialMode] = useState<
     "commands" | "content"
@@ -607,10 +615,6 @@ export default function App() {
   const openNewPrivateTab = useCallback(() => {
     newPrivateTab(inheritedCwdForNewTab());
   }, [newPrivateTab, inheritedCwdForNewTab]);
-
-  const openNewBlockTab = useCallback(() => {
-    newBlockTab(inheritedCwdForNewTab());
-  }, [newBlockTab, inheritedCwdForNewTab]);
 
   const launchAgentGroup = useCallback(
     (request: AgentLaunchRequest) => {
@@ -896,7 +900,6 @@ export default function App() {
       "commandPalette.open": () => openCommandPalette("commands"),
       "commandPalette.content": () => openCommandPalette("content"),
       "tab.new": openNewTab,
-      "tab.newBlock": openNewBlockTab,
       "tab.newPrivate": openNewPrivateTab,
       "tab.newPreview": () => openPreviewTab(""),
       "tab.newEditor": () => setNewEditorOpen(true),
@@ -970,7 +973,6 @@ export default function App() {
       cycleSpace,
       handleCloseTabOrPane,
       openNewTab,
-      openNewBlockTab,
       openNewPrivateTab,
       openPreviewTab,
       activeSpaceId,
@@ -1264,7 +1266,6 @@ export default function App() {
             explorerRoot,
             home,
             openNewTab,
-            openNewBlock: openNewBlockTab,
             openNewPrivate: openNewPrivateTab,
             openNewEditor: () => setNewEditorOpen(true),
             openNewPreview: () => openPreviewTab(""),
@@ -1279,6 +1280,7 @@ export default function App() {
             toggleHiddenFiles,
             toggleAi: togglePanelAndFocus,
             askAiSelection: askFromSelection,
+            launchAgents: () => setAgentLauncherOpen(true),
             openSettings: () => void openSettingsWindow(),
             openKeyboardShortcuts: () => void openSettingsWindow("shortcuts"),
             spaces: useSpaces.getState().spaces,
@@ -1296,7 +1298,6 @@ export default function App() {
       explorerRoot,
       home,
       openNewTab,
-      openNewBlockTab,
       openNewPrivateTab,
       openPreviewTab,
       openGitGraphFromContext,
@@ -1405,7 +1406,6 @@ export default function App() {
               booted={booted}
               setActiveId={setActiveId}
               newTab={newTab}
-              newBlockTab={newBlockTab}
               newAgentGroupTab={newAgentGroupTab}
               splitActivePane={splitActivePane}
               closeTab={closeTab}
@@ -1422,12 +1422,8 @@ export default function App() {
               activeId={activeId}
               onSelect={setActiveId}
               onNew={openNewTab}
-              onNewBlock={openNewBlockTab}
-              onNewPrivate={openNewPrivateTab}
-              onNewPreview={() => openPreviewTab("")}
               onNewEditor={() => setNewEditorOpen(true)}
               onNewGitGraph={openGitGraphFromContext}
-              onLaunchAgents={launchAgentGroup}
               onClose={handleClose}
               onCloseTabsToRight={handleCloseTabsToRight}
               onCloseOtherTabs={handleCloseOtherTabs}
@@ -1637,6 +1633,23 @@ export default function App() {
             onOpenContentHit={openContentHit}
             insertCommand={insertHistoryCommand}
           />
+
+          <Dialog open={agentLauncherOpen} onOpenChange={setAgentLauncherOpen}>
+            <DialogContent className="sm:max-w-sm">
+              <DialogHeader>
+                <DialogTitle>Launch agents</DialogTitle>
+                <DialogDescription>
+                  Choose an agent and how many panes to open.
+                </DialogDescription>
+              </DialogHeader>
+              <AgentLauncherPanel
+                onLaunch={(request) => {
+                  launchAgentGroup(request);
+                  setAgentLauncherOpen(false);
+                }}
+              />
+            </DialogContent>
+          </Dialog>
 
           <NewEditorDialog
             open={newEditorOpen}

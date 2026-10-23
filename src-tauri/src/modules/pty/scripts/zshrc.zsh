@@ -44,6 +44,21 @@ if [[ -z "$__REX_HOOKS_LOADED" ]]; then
     local _rex_ret=$?
     printf '\e]133;D;%s\e\\' "$_rex_ret"
     printf '\e]7;file://%s%s\e\\' "${HOST}" "$(_rex_urlencode "$PWD")"
+    # Warp-style env report for the context chips. node is forked only when
+    # cwd or PATH changed (`nvm use` changes PATH), so the value tracks the
+    # user's real shell. Branch changes via `git checkout` without PATH moving,
+    # so it is probed every prompt like Warp's precmd payload.
+    local _rex_node_key="$PWD:$PATH"
+    if [[ "$_rex_node_key" != "${_REX_NODE_KEY:-}" ]]; then
+      _REX_NODE_KEY="$_rex_node_key"
+      local _rex_node="$(node --version 2>/dev/null)"
+      [[ -n "$_rex_node" ]] && printf '\e]6637;node=%s\e\\' "$_rex_node"
+    fi
+    if (( $+commands[git] )); then
+      local _rex_branch="$(git symbolic-ref --short -q HEAD 2>/dev/null || git rev-parse --short HEAD 2>/dev/null)"
+      [[ -n "$_rex_branch" ]] \
+        && printf '\e]6637;branch=%s\e\\' "$(_rex_urlencode "$_rex_branch")"
+    fi
     # In block mode the host renders its own input bar, so suppress the shell
     # prompt entirely (keep only the OSC 133 B marker) and add a leading blank
     # line so frozen command blocks get vertical breathing room.

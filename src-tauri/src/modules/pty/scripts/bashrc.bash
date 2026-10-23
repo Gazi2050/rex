@@ -52,6 +52,21 @@ if [ -z "$__REX_HOOKS_LOADED" ]; then
     local _rex_ret=$?
     printf '\e]133;D;%s\e\\' "$_rex_ret"
     printf '\e]7;file://%s%s\e\\' "${HOSTNAME:-$(uname -n 2>/dev/null)}" "$(_rex_urlencode "$PWD")"
+    # Warp-style env report for the context chips. node is forked only when
+    # cwd or PATH changed (`nvm use` changes PATH), so the value tracks the
+    # user's real shell. Branch changes via `git checkout` without PATH moving,
+    # so it is probed every prompt like Warp's precmd payload.
+    _rex_node_key="$PWD:$PATH"
+    if [ "$_rex_node_key" != "${_REX_NODE_KEY:-}" ]; then
+      _REX_NODE_KEY="$_rex_node_key"
+      _rex_node="$(node --version 2>/dev/null)"
+      [ -n "$_rex_node" ] && printf '\e]6637;node=%s\e\\' "$_rex_node"
+    fi
+    if command -v git >/dev/null 2>&1; then
+      _rex_branch="$(git symbolic-ref --short -q HEAD 2>/dev/null || git rev-parse --short HEAD 2>/dev/null)"
+      [ -n "$_rex_branch" ] \
+        && printf '\e]6637;branch=%s\e\\' "$(_rex_urlencode "$_rex_branch")"
+    fi
     if [ -n "$REX_BLOCKS" ]; then
       # Host renders its own input bar: suppress the shell prompt (B marker
       # only) and reserve header/gap rows, mirroring the zsh integration.

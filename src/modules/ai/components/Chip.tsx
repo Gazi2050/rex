@@ -36,6 +36,8 @@ type Props = {
   /** Dimmed prefix before the value (e.g. "on" before a branch). */
   label?: string;
   title?: string;
+  /** Default true; false shows the full value (e.g. the cwd chip). */
+  truncate?: boolean;
   onRemove?: () => void;
   removeLabel?: string;
   children?: ReactNode;
@@ -47,6 +49,7 @@ export function Chip({
   iconNode,
   label,
   title,
+  truncate = true,
   onRemove,
   removeLabel = "Remove",
   children,
@@ -73,7 +76,13 @@ export function Chip({
         ))}
       {label && <span className="opacity-55">{label}</span>}
       {children != null && (
-        <span className="max-w-[12rem] truncate font-medium">{children}</span>
+        <span
+          className={
+            truncate ? "max-w-[12rem] truncate font-medium" : "font-medium"
+          }
+        >
+          {children}
+        </span>
       )}
       {onRemove && (
         <button

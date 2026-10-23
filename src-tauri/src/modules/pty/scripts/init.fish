@@ -79,6 +79,24 @@ function __rex_install_prompt
         set -l __rex_status $status
         printf '\e]133;D;%d\e\\' $__rex_status
         printf '\e]7;file://%s%s\e\\' "$__REX_HOST" (__rex_urlencode_path "$PWD")
+        # Warp-style env report for the context chips. node is forked only when
+        # cwd or PATH changed (`nvm use` changes PATH), so the value tracks the
+        # user's real shell. Branch changes via `git checkout` without PATH
+        # moving, so it is probed every prompt like Warp's precmd payload.
+        set -l __rex_node_key "$PWD:$PATH"
+        if test "$__rex_node_key" != "$__rex_node_env_key"
+            set -g __rex_node_env_key "$__rex_node_key"
+            set -l __rex_node (node --version 2>/dev/null)
+            if test -n "$__rex_node"
+                printf '\e]6637;node=%s\e\\' "$__rex_node"
+            end
+        end
+        if type -q git
+            set -l __rex_branch (git symbolic-ref --short -q HEAD 2>/dev/null; or git rev-parse --short HEAD 2>/dev/null)
+            if test -n "$__rex_branch"
+                printf '\e]6637;branch=%s\e\\' (string escape --style=url -- "$__rex_branch")
+            end
+        end
         printf '\e]133;A\e\\'
         # Block mode: host renders its own input bar, so suppress the shell prompt
         # (B marker only) and reserve header/gap rows, mirroring zsh.

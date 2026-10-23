@@ -1,12 +1,15 @@
+import { ScrollGrabber } from "@/components/ScrollGrabber";
 import { resolveFontFamily } from "@/lib/fonts";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/modules/theme";
 import { runScopeHandlers } from "@codemirror/view";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   clearLeafBlockSelection,
   getLeafDraft,
   leafGridSelection,
+  pasteRawToLeaf,
+  sendRawKeyToLeaf,
   setLeafDraft,
   setLeafInputActivity,
   setLeafInputFocus,
@@ -14,12 +17,7 @@ import {
   setLeafInputPaste,
 } from "../lib/terminalSessionApi";
 import { useTerminalFont } from "../lib/useTerminalFont";
-import {
-  historyCommands,
-  historyList,
-  historyRecord,
-  historySuggest,
-} from "./lib/history";
+import { historyList, historyRecord, historySuggest } from "./lib/history";
 import type { BlockMode } from "./lib/modeMachine";
 import { createShellEditor, type ShellEditorHandle } from "./lib/shellEditor";
 
@@ -30,7 +28,6 @@ type Props = {
   focused: boolean;
   onSubmit: (text: string) => void;
   onInterrupt: () => void;
-  getCwd: () => string | null;
 };
 
 export default function ShellInput({
@@ -39,28 +36,20 @@ export default function ShellInput({
   focused,
   onSubmit,
   onInterrupt,
-  getCwd,
 }: Props) {
   const hostRef = useRef<HTMLDivElement>(null);
   const handleRef = useRef<ShellEditorHandle | null>(null);
-  const commandsRef = useRef<string[]>([]);
-  const cbRef = useRef({ onSubmit, onInterrupt, getCwd });
-  cbRef.current = { onSubmit, onInterrupt, getCwd };
+  const cbRef = useRef({ onSubmit, onInterrupt });
+  cbRef.current = { onSubmit, onInterrupt };
   const leafIdRef = useRef(leafId);
   leafIdRef.current = leafId;
   const atPrompt = mode === "prompt";
   const focusableRef = useRef(false);
   focusableRef.current = focused && atPrompt;
-
-  useEffect(() => {
-    let alive = true;
-    historyCommands("", 2000).then((cmds) => {
-      if (alive) commandsRef.current = cmds;
-    });
-    return () => {
-      alive = false;
-    };
-  }, []);
+  const modeRef = useRef(mode);
+  modeRef.current = mode;
+  /** CodeMirror's scroll container, for the overlay grabber. */
+  const [scroller, setScroller] = useState<HTMLElement | null>(null);
 
   const {
     fontFamily: fontFamilyPref,
@@ -81,24 +70,33 @@ export default function ShellInput({
       fontSize: fontRef.current.fontSize,
       fontWeight: fontRef.current.fontWeight,
       placeholderText: "Run a command",
-      commandNames: () => commandsRef.current,
-      getCwd: () => cbRef.current.getCwd(),
       onChange: (text) =>
         setLeafInputActivity(leafIdRef.current, text.length > 0),
       suggest: historySuggest,
       historyList,
       onSubmit: (text) => {
         historyRecord(text);
-        const first = text.trim().split(/\s+/)[0];
-        if (first && !commandsRef.current.includes(first)) {
-          commandsRef.current = [first, ...commandsRef.current.slice(0, 1999)];
-        }
         cbRef.current.onSubmit(text);
       },
       onInterrupt: () => cbRef.current.onInterrupt(),
       onEscape: () => clearLeafBlockSelection(leafIdRef.current),
+      // While a foreground program owns the terminal, the input is its
+      // keyboard: every key is forwarded raw (Ctrl+C stays the interrupt
+      // binding, and Ctrl+V keeps the browser paste flow).
+      rawMode: () => modeRef.current !== "prompt",
+      rawKey: (event) => {
+        if (modeRef.current === "prompt") return false;
+        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "c")
+          return false;
+        return sendRawKeyToLeaf(leafIdRef.current, event);
+      },
+      rawPaste: (text) =>
+        modeRef.current === "prompt"
+          ? false
+          : pasteRawToLeaf(leafIdRef.current, text),
     });
     handleRef.current = handle;
+    setScroller(handle.view.scrollDOM);
     const frame = requestAnimationFrame(() => {
       if (focusableRef.current) handleRef.current?.focus();
     });
@@ -152,12 +150,6 @@ export default function ShellInput({
   }, [fontFamily, fontSize, fontWeight, activeTheme, resolvedMode]);
 
   useEffect(() => {
-    const handle = handleRef.current;
-    if (!handle) return;
-    handle.setEditable(atPrompt);
-  }, [atPrompt]);
-
-  useEffect(() => {
     if (focused && atPrompt) handleRef.current?.focus();
   }, [focused, atPrompt]);
 
@@ -174,7 +166,10 @@ export default function ShellInput({
 
   return (
     <div
-      className={cn("flex items-start gap-2", !atPrompt && "opacity-45")}
+      className={cn(
+        "relative flex items-start gap-2",
+        !atPrompt && "opacity-45",
+      )}
       onCopyCapture={onCopyCapture}
     >
       <span
@@ -189,6 +184,7 @@ export default function ShellInput({
         ❯
       </span>
       <div ref={hostRef} className="min-w-0 flex-1" />
+      <ScrollGrabber viewport={scroller} />
     </div>
   );
 }

@@ -1,13 +1,27 @@
+import { ChipMenu } from "@/components/ChipMenu";
+import {
+  BranchMenuContent,
+  DirectoryMenuContent,
+  NodeMenuContent,
+} from "@/components/chipMenuContents";
 import { homeRelativePath } from "@/lib/homeRelativePath";
+import {
+  nodeUseCommand,
+  nodeVersionsFor,
+  pickNodeManager,
+} from "@/lib/nodeProbe";
+import { quoteShellArg } from "@/lib/shellQuote";
 import { cn } from "@/lib/utils";
 import { AiInputBarConnect } from "@/modules/ai";
 import { Chip } from "@/modules/ai/components/Chip";
 import { ChipsRow } from "@/modules/ai/components/ChipsRow";
 import { useComposer } from "@/modules/ai/lib/composer";
+import { native } from "@/modules/ai/lib/native";
 import { useBlockController } from "@/modules/terminal/lib/blockController";
 import { focusLeafInput } from "@/modules/terminal/lib/terminalSessionApi";
 import {
   AiContentGenerator02Icon,
+  CodeIcon,
   CommandLineIcon,
   Folder01Icon,
   GitBranchIcon,
@@ -16,7 +30,9 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { OsIcon } from "./OsIcon";
-import { useGitBranch } from "./useGitBranch";
+import { useLeafNodeEnv } from "./useLeafNodeEnv";
+import { useNodeEnv } from "./useNodeEnv";
+import { useRepoBranches } from "./useRepoBranches";
 import { useSystemInfo } from "./useSystemInfo";
 
 const ShellInput = lazy(() => import("@/modules/terminal/block/ShellInput"));
@@ -66,7 +82,33 @@ export function WorkspaceInputBar({
     }
     prevBlockMode.current = blockMode;
   }, [blockMode]);
-  const branch = useGitBranch(isTerminalTab ? cwd : null, promptNonce);
+  const {
+    branch: repoBranch,
+    branches,
+    loaded,
+  } = useRepoBranches(isTerminalTab ? cwd : null, promptNonce);
+  const nodeEnv = useNodeEnv(isTerminalTab ? cwd : null, promptNonce);
+  const shellEnv = useLeafNodeEnv(isTerminalTab ? activeLeafId : null);
+  // Shell-reported values win: they reflect THIS terminal (nvm use, checkout),
+  // where the filesystem probe only sees the app's env.
+  const branch = shellEnv.branch ?? repoBranch;
+  const nodeCurrent = shellEnv.node ?? nodeEnv?.current ?? null;
+  const nodeManager = nodeEnv ? pickNodeManager(nodeEnv, nodeCurrent) : null;
+  const nodeVersions = nodeEnv ? nodeVersionsFor(nodeEnv, nodeManager) : [];
+
+  // Subdirectories for the path chip's cd menu; fetched lazily on open.
+  const [subdirs, setSubdirs] = useState<string[] | null>(null);
+  const loadSubdirs = () => {
+    if (!cwd) return;
+    void native
+      .readDir(cwd)
+      .then((entries) =>
+        setSubdirs(
+          entries.filter((entry) => entry.kind === "dir").map((e) => e.name),
+        ),
+      )
+      .catch(() => setSubdirs([]));
+  };
 
   const showToggle = isBlockTab && hasComposer;
   const [mode, setMode] = useState<"shell" | "ai">("shell");
@@ -106,16 +148,71 @@ export function WorkspaceInputBar({
   const terminalChips = isTerminalTab ? (
     <>
       {os && <Chip tone="neutral" iconNode={<OsIcon os={os} />} title={os} />}
-      {cwd && (
-        <Chip tone="blue" icon={Folder01Icon} title={cwd}>
-          {homeRelativePath(cwd, home)}
-        </Chip>
-      )}
-      {branch && (
-        <Chip tone="violet" icon={GitBranchIcon} title={`Branch: ${branch}`}>
-          {branch}
-        </Chip>
-      )}
+      {nodeCurrent &&
+        (nodeManager && nodeVersions.length > 0 && controller ? (
+          <ChipMenu
+            icon={CodeIcon}
+            label={nodeCurrent}
+            title={`Node ${nodeCurrent} (click to switch)`}
+            disabled={blockMode !== "prompt"}
+          >
+            <NodeMenuContent
+              manager={nodeManager}
+              versions={nodeVersions}
+              current={nodeCurrent}
+              onUse={(version) =>
+                controller.submitCommand(nodeUseCommand(nodeManager, version))
+              }
+            />
+          </ChipMenu>
+        ) : (
+          <Chip tone="neutral" icon={CodeIcon} title="Node version">
+            {nodeCurrent}
+          </Chip>
+        ))}
+      {cwd &&
+        (controller ? (
+          <ChipMenu
+            icon={Folder01Icon}
+            label={homeRelativePath(cwd, home)}
+            title={`${cwd} (click to navigate)`}
+            truncate={false}
+            disabled={blockMode !== "prompt"}
+            onOpenChange={(open) => open && loadSubdirs()}
+          >
+            <DirectoryMenuContent
+              entries={subdirs ?? []}
+              onCd={(name) =>
+                controller.submitCommand(`cd ${quoteShellArg(name)}`)
+              }
+            />
+          </ChipMenu>
+        ) : (
+          <Chip tone="blue" icon={Folder01Icon} title={cwd} truncate={false}>
+            {homeRelativePath(cwd, home)}
+          </Chip>
+        ))}
+      {branch &&
+        (controller && loaded && branches.length > 0 ? (
+          <ChipMenu
+            icon={GitBranchIcon}
+            label={branch}
+            title={`Branch: ${branch} (click to switch)`}
+            disabled={blockMode !== "prompt"}
+          >
+            <BranchMenuContent
+              entries={branches}
+              current={branch}
+              onCheckout={(name) =>
+                controller.submitCommand(`git checkout ${quoteShellArg(name)}`)
+              }
+            />
+          </ChipMenu>
+        ) : (
+          <Chip tone="violet" icon={GitBranchIcon} title={`Branch: ${branch}`}>
+            {branch}
+          </Chip>
+        ))}
       {shell && (
         <Chip tone="emerald" icon={CommandLineIcon}>
           {shell}
@@ -166,7 +263,6 @@ export function WorkspaceInputBar({
                         focused={effectiveMode === "shell"}
                         onSubmit={controller.submitCommand}
                         onInterrupt={controller.interrupt}
-                        getCwd={controller.getCwd}
                       />
                     </Suspense>
                   )}

@@ -1,4 +1,9 @@
 import {
+  type AgentLaunchCommands,
+  DEFAULT_AGENT_LAUNCH_COMMANDS,
+  normalizeAgentLaunchCommands,
+} from "@/modules/agents/lib/launcher";
+import {
   type AutocompleteProviderId,
   type CustomEndpoint,
   DEFAULT_AUTOCOMPLETE_MODEL,
@@ -14,11 +19,6 @@ import {
   type SttProvider,
   WHISPERCPP_DEFAULT_BASE_URL,
 } from "@/modules/ai/config";
-import {
-  type AgentLaunchCommands,
-  DEFAULT_AGENT_LAUNCH_COMMANDS,
-  normalizeAgentLaunchCommands,
-} from "@/modules/agents/lib/launcher";
 import type { KeyBinding, ShortcutId } from "@/modules/shortcuts/shortcuts";
 import { emit, listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { LazyStore } from "@tauri-apps/plugin-store";
@@ -299,11 +299,13 @@ export const EDITOR_WORD_WRAP_COLUMN_DEFAULT = 80;
 export const EDITOR_WORD_WRAP_COLUMN_MIN = 20;
 export const EDITOR_WORD_WRAP_COLUMN_MAX = 500;
 
-const TERMINAL_SCROLLBACK_DEFAULT = 2000;
+// 10k lines matches the ghostty core's own default; the old shipped default
+// (2000) pruned long output before it was ever visible.
+const TERMINAL_SCROLLBACK_DEFAULT = 10_000;
 const TERMINAL_SCROLLBACK_MIN = 200;
-const TERMINAL_SCROLLBACK_MAX = 50_000;
+const TERMINAL_SCROLLBACK_MAX = 100_000;
 export const TERMINAL_SCROLLBACK_PRESETS = [
-  500, 1000, 2000, 5000, 10_000, 25_000,
+  1000, 5000, 10_000, 25_000, 50_000, 100_000,
 ] as const;
 
 export const DEFAULT_PREFERENCES: Preferences = {
@@ -529,10 +531,7 @@ export async function loadPreferences(): Promise<Preferences> {
     terminalFontSize:
       get<number>(KEY_TERMINAL_FONT_SIZE) ??
       DEFAULT_PREFERENCES.terminalFontSize,
-    terminalScrollback: clampScrollback(
-      get<number>(KEY_TERMINAL_SCROLLBACK) ??
-        DEFAULT_PREFERENCES.terminalScrollback,
-    ),
+    terminalScrollback: migrateScrollback(get<number>(KEY_TERMINAL_SCROLLBACK)),
     confirmCloseRunningTerminal:
       get<boolean>(KEY_CONFIRM_CLOSE_RUNNING_TERMINAL) ??
       DEFAULT_PREFERENCES.confirmCloseRunningTerminal,
@@ -865,6 +864,14 @@ function clampScrollback(value: number): number {
     TERMINAL_SCROLLBACK_MAX,
     Math.max(TERMINAL_SCROLLBACK_MIN, Math.round(value)),
   );
+}
+
+/** One-time bump: 2000 was the shipped default and pruned long output before
+ *  it was ever visible; users who explicitly picked 2000 before get the new
+ *  default too, every other stored value is respected. */
+function migrateScrollback(value: number | undefined): number {
+  if (value === undefined || value === 2000) return TERMINAL_SCROLLBACK_DEFAULT;
+  return clampScrollback(value);
 }
 
 export async function setTerminalScrollback(value: number): Promise<void> {

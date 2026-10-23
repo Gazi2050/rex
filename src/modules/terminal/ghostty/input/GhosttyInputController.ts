@@ -1,16 +1,15 @@
+import { TerminalInputProxy } from "@/modules/terminal/ghostty/input/TerminalInputProxy";
+import { TerminalNativeSelection } from "@/modules/terminal/ghostty/input/TerminalNativeSelection";
 import { terminalReadlineSequence } from "@/modules/terminal/lib/keymap";
 import { readTerminalClipboard } from "@/modules/terminal/lib/terminalClipboard";
 import {
   Key,
   KeyAction,
-  Mods,
   type KeyEvent,
+  Mods,
 } from "@rex/ghostty-core/protocol";
 import type { GhosttyTerminalModelApi } from "../GhosttyTerminalModel";
 import { encodeTerminalPaste } from "./terminalInputEncoding";
-
-import { TerminalInputProxy } from "@/modules/terminal/ghostty/input/TerminalInputProxy";
-import { TerminalNativeSelection } from "@/modules/terminal/ghostty/input/TerminalNativeSelection";
 
 const DUPLICATE_INPUT_WINDOW_MS = 75;
 
@@ -616,6 +615,54 @@ function unshiftedCodepoint(event: KeyboardEvent): number {
   return event.code.startsWith("Key") && event.code.length === 4
     ? event.code.toLowerCase().charCodeAt(3)
     : 0;
+}
+
+const RAW_MODIFIER_KEYS = new Set([
+  "Shift",
+  "Control",
+  "Alt",
+  "Meta",
+  "CapsLock",
+  "NumLock",
+  "ScrollLock",
+  "AltGraph",
+  "Dead",
+  "Compose",
+]);
+
+/**
+ * Encodes a DOM keydown for direct PTY delivery — the path the shell input
+ * uses when it is the keyboard for a running foreground program (interactive
+ * pickers, TUIs). Returns null when the event produces no input: pure
+ * modifiers, IME composition, or unmapped non-printable keys.
+ * `ponytail`: press-only (no keyup RELEASE events) — only kitty-protocol
+ * apps can tell, and interactive CLIs can't.
+ */
+export function encodeRawKey(
+  event: KeyboardEvent,
+  model: GhosttyTerminalModelApi,
+): Uint8Array | null {
+  if (event.isComposing || RAW_MODIFIER_KEYS.has(event.key)) return null;
+  const key = KEY_MAP[event.code];
+  if (key !== undefined) {
+    const encoded = model.encodeKey({
+      action: KeyAction.PRESS,
+      key,
+      mods: modifiers(event),
+      utf8: event.key.length === 1 ? event.key : undefined,
+      unshiftedCodepoint: unshiftedCodepoint(event),
+    });
+    return encoded.byteLength > 0 ? encoded : null;
+  }
+  if (
+    event.key.length === 1 &&
+    !event.ctrlKey &&
+    !event.metaKey &&
+    !event.altKey
+  ) {
+    return new TextEncoder().encode(event.key);
+  }
+  return null;
 }
 
 export function terminalMouseModifiers(

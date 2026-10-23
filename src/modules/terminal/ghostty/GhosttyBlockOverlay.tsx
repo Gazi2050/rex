@@ -1,4 +1,3 @@
-import { useCallback, useSyncExternalStore } from "react";
 import { BlockOverlay } from "@/modules/terminal/block/BlockOverlay";
 import { BlockWatermark } from "@/modules/terminal/block/BlockWatermark";
 import { ensureGhosttyBlocks } from "@/modules/terminal/ghostty/ghosttyBlockSessions";
@@ -7,6 +6,7 @@ import {
   focusLeafInput,
   submitToLeaf,
 } from "@/modules/terminal/lib/terminalSessionApi";
+import { useCallback, useSyncExternalStore } from "react";
 
 export default function GhosttyBlockOverlay({ leafId }: { leafId: number }) {
   const state = ensureGhosttyBlocks(leafId);
@@ -35,6 +35,7 @@ export default function GhosttyBlockOverlay({ leafId }: { leafId: number }) {
         clearSearch={() => state.controller?.clearSearch()}
         promptReady={mode === "prompt"}
         onRunAgain={(command) => submitToLeaf(leafId, command)}
+        onSubmitCommand={(command) => submitToLeaf(leafId, command)}
         onRestoreFocus={() => {
           if (state.getMode() === "prompt") focusLeafInput(leafId);
         }}
