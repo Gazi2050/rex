@@ -5,10 +5,21 @@ import { cn } from "@/lib/utils"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Tick02Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons"
 
+// Non-modal: Radix's modal layers set `body { pointer-events: none }`, and in
+// the Tauri WebKitGTK webview that swallows the outside pointerdown, leaving
+// the menu stuck open. Non-modal also lets the dismissing click through, which
+// is how native menus behave. Call sites can still pass `modal` explicitly.
 function DropdownMenu({
+  modal = false,
   ...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.Root>) {
-  return <DropdownMenuPrimitive.Root data-slot="dropdown-menu" {...props} />
+  return (
+    <DropdownMenuPrimitive.Root
+      data-slot="dropdown-menu"
+      modal={modal}
+      {...props}
+    />
+  )
 }
 
 function DropdownMenuPortal({

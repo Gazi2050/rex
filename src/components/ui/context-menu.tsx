@@ -5,10 +5,20 @@ import { cn } from "@/lib/utils"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { ArrowRight01Icon, Tick02Icon } from "@hugeicons/core-free-icons"
 
+// Non-modal for the same reason as DropdownMenu: a modal layer's
+// `body { pointer-events: none }` swallows the dismissing pointerdown in the
+// Tauri WebKitGTK webview, so the menu never closes on an outside click.
 function ContextMenu({
+  modal = false,
   ...props
 }: React.ComponentProps<typeof ContextMenuPrimitive.Root>) {
-  return <ContextMenuPrimitive.Root data-slot="context-menu" {...props} />
+  return (
+    <ContextMenuPrimitive.Root
+      data-slot="context-menu"
+      modal={modal}
+      {...props}
+    />
+  )
 }
 
 function ContextMenuTrigger({
