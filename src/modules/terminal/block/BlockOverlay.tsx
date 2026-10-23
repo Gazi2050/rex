@@ -1,7 +1,6 @@
 import { homeRelativePath } from "@/lib/homeRelativePath";
 import "@/modules/terminal/block/block.css";
 
-import { writeTerminalClipboard } from "@/modules/terminal/lib/terminalClipboard";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,11 +9,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { useChatStore } from "@/modules/ai/store/chatStore";
+import { writeTerminalClipboard } from "@/modules/terminal/lib/terminalClipboard";
 import {
   ArrowDown01Icon,
   ArrowUp01Icon,
   Cancel01Icon,
-  Clock01Icon,
   CommandLineIcon,
   ComputerTerminal02Icon,
   Copy01Icon,
@@ -209,10 +208,7 @@ function Meta({ block }: { block: PositionedBlock }) {
           {homeRelativePath(block.cwd, cachedHome)}
         </span>
       )}
-      <span className="bt-clock">
-        <HugeiconsIcon icon={Clock01Icon} size={11} strokeWidth={1.75} />
-        {fmtTime(block.startedAt)}
-      </span>
+      <span className="bt-clock">{fmtTime(block.startedAt)}</span>
     </span>
   );
 }
@@ -247,7 +243,10 @@ function Toolbar({ block, all, onSearch }: ChromeProps) {
           title="Run again"
           className="bt-btn"
           disabled={!all.promptReady}
-          onClick={() => all.onRunAgain(block.command)}
+          onClick={() => {
+            all.onRestoreFocus();
+            all.onRunAgain(block.command);
+          }}
         >
           <HugeiconsIcon icon={Refresh01Icon} size={12.5} strokeWidth={1.75} />
         </button>

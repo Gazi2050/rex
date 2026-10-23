@@ -124,13 +124,13 @@
 
 .bt-bar {
   position: absolute;
-  left: 8px;
-  right: 8px;
+  left: 12px;
+  right: 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   height: 18px;
-  opacity: 0.72;
+  opacity: 0.68;
   transition: opacity var(--dur-fast) var(--ease-soft);
 }
 
@@ -141,10 +141,17 @@
 .bt-head-meta {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   min-width: 0;
   font-size: 10px;
   color: var(--muted-foreground, rgba(170, 170, 170, 0.85));
+}
+
+/* Quiet dot between cwd and time instead of a separator icon. */
+.bt-head-meta > :not(:first-child)::before {
+  content: "·";
+  margin-right: 6px;
+  opacity: 0.6;
 }
 
 .bt-cwd {
@@ -157,8 +164,6 @@
 
 .bt-clock {
   display: inline-flex;
-  align-items: center;
-  gap: 3px;
   font-variant-numeric: tabular-nums;
   opacity: 0.85;
 }
@@ -186,17 +191,18 @@
   padding: 1px 3px;
   border-radius: 7px;
   pointer-events: auto;
-  border: 1px solid var(--border, rgba(255, 255, 255, 0.1));
-  background: color-mix(in srgb, var(--popover, #1b1b1d) 96%, transparent);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
   color: var(--muted-foreground, rgba(170, 170, 170, 0.85));
 }
 
+/* The search bar floats over live output, so it keeps a solid card. The
+   toolbar is bare so the header stays quiet until you reach for it. */
 .bt-search {
   position: absolute;
   top: 8px;
   right: 8px;
   padding: 2px 4px;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+  background: color-mix(in srgb, var(--popover, #1b1b1d) 96%, transparent);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 

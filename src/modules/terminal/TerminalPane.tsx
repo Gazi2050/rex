@@ -13,11 +13,11 @@ import {
 } from "react";
 import type { TerminalBackendKind } from "./backend/contracts";
 import { resolvedTerminalBackend } from "./backend/selection";
-import {
-  useGhosttyTerminalSession,
-  ghosttyBlockGeometry,
-} from "./ghostty/useGhosttyTerminalSession";
 import { ghosttyBlocks } from "./ghostty/ghosttyBlockSessions";
+import {
+  ghosttyBlockGeometry,
+  useGhosttyTerminalSession,
+} from "./ghostty/useGhosttyTerminalSession";
 
 export type TerminalPaneHandle = {
   write: (data: string) => void;
@@ -151,7 +151,14 @@ const GhosttyTerminalPane = memo(
                       state.model.bufferLineAtViewportRow(row),
                     );
                 }
-                if (state?.getMode() === "prompt") state.focus?.();
+                // Only the terminal surface takes focus back. Block chrome
+                // (toolbar menus, search bar) lives in this pane too, and
+                // refocusing on those clicks dismisses open menus.
+                if (
+                  state?.getMode() === "prompt" &&
+                  containerRef.current?.contains(event.target as Node)
+                )
+                  state.focus?.();
               }
             : undefined
         }
