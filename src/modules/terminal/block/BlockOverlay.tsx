@@ -32,6 +32,7 @@ import type {
   PositionedBlock,
   VisibleBlocks,
 } from "./lib/blockTypes";
+import { formatDuration } from "./lib/formatDuration";
 import { capAttachOutput } from "./lib/outputCap";
 
 let cachedHome: string | null = null;
@@ -58,20 +59,6 @@ type Props = {
 };
 
 const EMPTY: VisibleBlocks = { blocks: [], sticky: null, generation: 0 };
-
-function fmtDuration(ms: number): string | null {
-  if (!Number.isFinite(ms) || ms <= 0) return null;
-  if (ms < 1000) return `${ms}ms`;
-  if (ms < 60000) return `${(ms / 1000).toFixed(ms < 10000 ? 1 : 0)}s`;
-  if (ms < 3_600_000) {
-    const m = Math.floor(ms / 60000);
-    const s = Math.round((ms % 60000) / 1000);
-    return s ? `${m}m ${s}s` : `${m}m`;
-  }
-  const h = Math.floor(ms / 3_600_000);
-  const m = Math.round((ms % 3_600_000) / 60000);
-  return m ? `${h}h ${m}m` : `${h}h`;
-}
 
 function fmtTime(ms: number): string {
   const d = new Date(ms);
@@ -182,10 +169,19 @@ type ChromeProps = {
   onSearch: (id: string) => void;
 };
 
-// No chrome while the command runs; the bar lands together with the divider
-// once the block is finished.
+// No divider while the command runs, but a slim bar with a live timer so a long
+// command shows time accumulating instead of nothing at all.
 function BlockChrome({ block, all, onSearch }: ChromeProps) {
-  if (block.running) return null;
+  if (block.running) {
+    return (
+      <div className="bt-bar" style={{ top: block.headerTop }}>
+        <Meta block={block} />
+        <div className="bt-tools">
+          <LiveDuration startedAt={block.startedAt} />
+        </div>
+      </div>
+    );
+  }
   return (
     <>
       <div
@@ -213,6 +209,17 @@ function Meta({ block }: { block: PositionedBlock }) {
   );
 }
 
+// Elapsed time for a running command. Its own interval keeps the tick out of
+// the overlay's viewport updates.
+function LiveDuration({ startedAt }: { startedAt: number }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, []);
+  return <span className="bt-dur">{formatDuration(now - startedAt)}</span>;
+}
+
 function StickyHeader({ block, all, onSearch }: ChromeProps) {
   return (
     <div className="bt-sticky">
@@ -231,12 +238,16 @@ function StickyHeader({ block, all, onSearch }: ChromeProps) {
 function Toolbar({ block, all, onSearch }: ChromeProps) {
   const duration = block.running
     ? null
-    : fmtDuration(block.finishedAt - block.startedAt);
+    : formatDuration(block.finishedAt - block.startedAt);
   const failed = !block.running && !block.ok && block.exitCode !== null;
   return (
     <div className="bt-tools">
       {failed && <span className="bt-exit">exit {block.exitCode}</span>}
-      {duration && <span className="bt-dur">{duration}</span>}
+      {duration && (
+        <span className={cn("bt-dur", failed && "bt-dur-fail")}>
+          {duration}
+        </span>
+      )}
       {!block.running && block.canRerun && (
         <button
           type="button"

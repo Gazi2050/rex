@@ -146,7 +146,7 @@ export function WorkspaceInputBar({
             onRemoveCommand={(name) => c.removeCommand(name)}
           />
 
-          <div className="flex items-end gap-2.5">
+          <div className="flex items-end gap-2.5 rounded-lg px-2 py-1 ring-1 ring-border/30 transition-colors focus-within:bg-foreground/[0.02] focus-within:ring-border/60">
             <div className="relative min-w-0 flex-1">
               {isBlockTab && controller && activeLeafId != null && (
                 <div className={cn(effectiveMode !== "shell" && "hidden")}>
