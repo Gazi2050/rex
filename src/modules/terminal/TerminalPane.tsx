@@ -105,27 +105,19 @@ const GhosttyTerminalPane = memo(
     );
 
     // Click-to-open: a clicked token that stats to a real file/folder opens
-    // in the editor/explorer. Hover adds an underline under the token using
-    // the same measured cell geometry as hit-testing.
+    // in the editor/explorer. Hover shows a pointer cursor — no underline or
+    // other painted hint.
     const lastTokenRef = useRef<string | null>(null);
-    const resolvedTokenRef = useRef<string | null>(null);
     const hoverSeqRef = useRef(0);
-    const pointerRef = useRef<{ x: number; y: number } | null>(null);
-    const [linkHint, setLinkHint] = useState<{
-      left: number;
-      top: number;
-      width: number;
-    } | null>(null);
+    const [pathHover, setPathHover] = useState(false);
 
     const hitTest = useCallback(
       (clientX: number, clientY: number) => {
         const geometry = ghosttyTerminalGeometry(leafId);
         const model = session.model;
-        const paneRect = containerRef.current?.getBoundingClientRect();
         if (
           !geometry ||
           !model ||
-          !paneRect ||
           geometry.cellWidth <= 0 ||
           geometry.height <= 0
         )
@@ -140,16 +132,7 @@ const GhosttyTerminalPane = memo(
         if (!range) return null;
         const token = cleanPathToken(line.slice(range.start, range.end));
         if (!token || token.length > 512) return null;
-        return {
-          token,
-          rect: {
-            left:
-              geometry.left - paneRect.left + range.start * geometry.cellWidth,
-            // Place the rule just above the cell's lower edge, clear of glyphs.
-            top: geometry.top - paneRect.top + (row + 1) * geometry.height - 2,
-            width: (range.end - range.start) * geometry.cellWidth,
-          },
-        };
+        return { token };
       },
       [leafId, session.model],
     );
@@ -159,26 +142,10 @@ const GhosttyTerminalPane = memo(
       if (!resolved) return false;
       hoverSeqRef.current += 1;
       lastTokenRef.current = null;
-      resolvedTokenRef.current = null;
-      setLinkHint(null);
+      setPathHover(false);
       onOpenPath?.(resolved.path, resolved.kind);
       return true;
     };
-
-    useEffect(() => {
-      const reposition = () => {
-        const pointer = pointerRef.current;
-        if (!pointer) return;
-        const hit = hitTest(pointer.x, pointer.y);
-        if (hit && hit.token === lastTokenRef.current) {
-          if (hit.token === resolvedTokenRef.current) setLinkHint(hit.rect);
-          return;
-        }
-        setLinkHint(null);
-      };
-      window.addEventListener("resize", reposition);
-      return () => window.removeEventListener("resize", reposition);
-    }, [hitTest]);
 
     return (
       <div
@@ -186,7 +153,7 @@ const GhosttyTerminalPane = memo(
         style={{
           visibility: visible ? "visible" : "hidden",
           pointerEvents: visible ? "auto" : "none",
-          cursor: linkHint ? "pointer" : undefined,
+          cursor: pathHover ? "pointer" : undefined,
         }}
         onPointerDownCapture={
           (event) => {
@@ -228,16 +195,10 @@ const GhosttyTerminalPane = memo(
         }
         onPointerMove={
           (event) => {
-            pointerRef.current = { x: event.clientX, y: event.clientY };
             const hit = hitTest(event.clientX, event.clientY);
-            if (hit && hit.token === lastTokenRef.current) {
-              if (hit.token === resolvedTokenRef.current)
-                setLinkHint(hit.rect);
-              return;
-            }
+            if (hit && hit.token === lastTokenRef.current) return;
             lastTokenRef.current = hit?.token ?? null;
-            resolvedTokenRef.current = null;
-            setLinkHint(null);
+            setPathHover(false);
             if (!hit) return;
             const seq = ++hoverSeqRef.current;
             void (async () => {
@@ -248,34 +209,20 @@ const GhosttyTerminalPane = memo(
               if (hoverSeqRef.current !== seq) return;
               if (!resolved) return;
               lastTokenRef.current = hit.token;
-              resolvedTokenRef.current = hit.token;
-              setLinkHint(hit.rect);
+              setPathHover(true);
             })();
           }
         }
         onPointerLeave={
           () => {
-            pointerRef.current = null;
             lastTokenRef.current = null;
-            resolvedTokenRef.current = null;
             hoverSeqRef.current += 1;
-            setLinkHint(null);
+            setPathHover(false);
           }
         }
         data-terminal-backend={backend}
       >
         <div ref={containerRef} className="absolute inset-0" />
-        {linkHint && (
-          <div
-            aria-hidden
-            className="pointer-events-none absolute z-10 h-[2px] rounded-full bg-primary shadow-[0_0_3px_var(--primary)]"
-            style={{
-              left: `${linkHint.left}px`,
-              top: `${linkHint.top}px`,
-              width: `${linkHint.width}px`,
-            }}
-          />
-        )}
         {screenReader && session.model && (
           <Suspense fallback={null}>
             <TerminalAccessibleOutput
