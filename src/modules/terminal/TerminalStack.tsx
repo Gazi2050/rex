@@ -15,6 +15,8 @@ type Props = {
   onCwd: (leafId: number, cwd: string) => void;
   onExit: (leafId: number, code: number) => void;
   onFocusLeaf: (tabId: number, leafId: number) => void;
+  /** Click-to-open from terminal output: files in the editor, dirs in the explorer. */
+  onOpenPath: (path: string, kind: "file" | "dir") => void;
 };
 
 type Bundle = {
@@ -22,6 +24,7 @@ type Bundle = {
   onSearchReady: (leafId: number, addon: TerminalSearchController) => void;
   onCwd: (leafId: number, cwd: string) => void;
   onExit: (leafId: number, code: number) => void;
+  onOpenPath: (path: string, kind: "file" | "dir") => void;
 };
 
 export function TerminalStack({
@@ -32,6 +35,7 @@ export function TerminalStack({
   onCwd,
   onExit,
   onFocusLeaf,
+  onOpenPath,
 }: Props) {
   const terminals = useMemo(() => selectLiveTerminals(tabs), [tabs]);
 
@@ -39,6 +43,7 @@ export function TerminalStack({
   const searchReadyRef = useRef(onSearchReady);
   const cwdRef = useRef(onCwd);
   const exitRef = useRef(onExit);
+  const openPathRef = useRef(onOpenPath);
   useEffect(() => {
     registerRef.current = registerHandle;
   }, [registerHandle]);
@@ -51,6 +56,9 @@ export function TerminalStack({
   useEffect(() => {
     exitRef.current = onExit;
   }, [onExit]);
+  useEffect(() => {
+    openPathRef.current = onOpenPath;
+  }, [onOpenPath]);
 
   const bundles = useRef(new Map<number, Bundle>());
   const getBundle = (leafId: number): Bundle => {
@@ -61,6 +69,7 @@ export function TerminalStack({
         onSearchReady: (id, addon) => searchReadyRef.current(id, addon),
         onCwd: (id, cwd) => cwdRef.current(id, cwd),
         onExit: (id, code) => exitRef.current(id, code),
+        onOpenPath: (path, kind) => openPathRef.current(path, kind),
       };
       bundles.current.set(leafId, b);
     }
@@ -105,7 +114,6 @@ export function TerminalStack({
               node={t.paneTree}
               tabVisible={tabVisible}
               activeLeafId={t.activeLeafId}
-              blocks={t.blocks ?? false}
               onFocusLeaf={(leafId) => onFocusLeaf(t.id, leafId)}
               getBundle={getBundle}
             />

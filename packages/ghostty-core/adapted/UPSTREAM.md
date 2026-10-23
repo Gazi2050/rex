@@ -23,15 +23,11 @@ Rex-specific changes include:
 - independent hard byte and line limits for scrollback;
 - a 256 KB maximum retained terminal-reply queue per terminal;
 - raw `Uint8Array` PTY writes and replies with no UTF-8 round trip;
-- prompt input capability for shells that need direct input instead of blocks;
 - native Ghostty key encoding and terminal mode queries in the same instance;
 - native tracked selections that survive streaming and reflow, clamp when
   partially pruned, and release their tracked pins deterministically;
 - bounded parser-owned semantic events for shell and product integration;
-- optional parser-time command markers with 2,048 tracked pins per terminal,
-  exact endpoint columns, full signed exit codes, and deterministic cleanup;
-- parser-time block invalidation for primary-screen clear and reset, retaining
-  bounded marker capacity and preserving later markers within the same write;
+- parser-time command lifecycle markers and full signed exit codes;
 - direct text range extraction independent of viewport or selection state;
 - current geometry queries even before a hidden terminal synchronizes rendering;
 - native mode, size, color, visibility, and version query replies;

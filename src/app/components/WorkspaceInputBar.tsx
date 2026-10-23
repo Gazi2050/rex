@@ -1,51 +1,29 @@
-import { ChipMenu } from "@/components/ChipMenu";
-import {
-  BranchMenuContent,
-  DirectoryMenuContent,
-  NodeMenuContent,
-} from "@/components/chipMenuContents";
 import { homeRelativePath } from "@/lib/homeRelativePath";
-import {
-  nodeUseCommand,
-  nodeVersionsFor,
-  pickNodeManager,
-} from "@/lib/nodeProbe";
-import { quoteShellArg } from "@/lib/shellQuote";
-import { cn } from "@/lib/utils";
+import { nodeVersionsFor, pickNodeManager } from "@/lib/nodeProbe";
 import { AiInputBarConnect } from "@/modules/ai";
 import { Chip } from "@/modules/ai/components/Chip";
 import { ChipsRow } from "@/modules/ai/components/ChipsRow";
 import { useComposer } from "@/modules/ai/lib/composer";
-import { native } from "@/modules/ai/lib/native";
-import { useBlockController } from "@/modules/terminal/lib/blockController";
-import { focusLeafInput } from "@/modules/terminal/lib/terminalSessionApi";
 import {
-  AiContentGenerator02Icon,
   CodeIcon,
   CommandLineIcon,
   Folder01Icon,
   GitBranchIcon,
-  TerminalIcon,
 } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { OsIcon } from "./OsIcon";
 import { useLeafNodeEnv } from "./useLeafNodeEnv";
 import { useNodeEnv } from "./useNodeEnv";
 import { useRepoBranches } from "./useRepoBranches";
 import { useSystemInfo } from "./useSystemInfo";
 
-const ShellInput = lazy(() => import("@/modules/terminal/block/ShellInput"));
 const AiComposerInput = lazy(() =>
   import("@/modules/ai/components/AiComposerInput").then((m) => ({
     default: m.AiComposerInput,
   })),
 );
 
-export const TOGGLE_BLOCK_INPUT_EVENT = "rex:toggle-block-input";
-
 type Props = {
-  isBlockTab: boolean;
   isTerminalTab: boolean;
   activeLeafId: number | null;
   cwd: string | null;
@@ -57,7 +35,6 @@ type Props = {
 };
 
 export function WorkspaceInputBar({
-  isBlockTab,
   isTerminalTab,
   activeLeafId,
   cwd,
@@ -70,24 +47,8 @@ export function WorkspaceInputBar({
   const c = useComposer();
   const { os, shell } = useSystemInfo();
 
-  const controller = useBlockController(isBlockTab ? activeLeafId : null);
-  const blockMode = controller?.blockMode ?? "prompt";
-
-  // Re-resolve the branch chip when a command finishes (covers `git checkout`).
-  const [promptNonce, setPromptNonce] = useState(0);
-  const prevBlockMode = useRef(blockMode);
-  useEffect(() => {
-    if (prevBlockMode.current !== "prompt" && blockMode === "prompt") {
-      setPromptNonce((n) => n + 1);
-    }
-    prevBlockMode.current = blockMode;
-  }, [blockMode]);
-  const {
-    branch: repoBranch,
-    branches,
-    loaded,
-  } = useRepoBranches(isTerminalTab ? cwd : null, promptNonce);
-  const nodeEnv = useNodeEnv(isTerminalTab ? cwd : null, promptNonce);
+  const { branch: repoBranch } = useRepoBranches(isTerminalTab ? cwd : null);
+  const nodeEnv = useNodeEnv(isTerminalTab ? cwd : null);
   const shellEnv = useLeafNodeEnv(isTerminalTab ? activeLeafId : null);
   // Shell-reported values win: they reflect THIS terminal (nvm use, checkout),
   // where the filesystem probe only sees the app's env.
@@ -97,122 +58,27 @@ export function WorkspaceInputBar({
   const nodeVersions = nodeEnv ? nodeVersionsFor(nodeEnv, nodeManager) : [];
 
   // Subdirectories for the path chip's cd menu; fetched lazily on open.
-  const [subdirs, setSubdirs] = useState<string[] | null>(null);
-  const loadSubdirs = () => {
-    if (!cwd) return;
-    void native
-      .readDir(cwd)
-      .then((entries) =>
-        setSubdirs(
-          entries.filter((entry) => entry.kind === "dir").map((e) => e.name),
-        ),
-      )
-      .catch(() => setSubdirs([]));
-  };
-
-  const showToggle = isBlockTab && hasComposer;
-  const [mode, setMode] = useState<"shell" | "ai">("shell");
-  const effectiveMode = !isBlockTab ? "ai" : hasComposer ? mode : "shell";
-
-  const mounted = keysLoaded || isBlockTab;
-  const open = isBlockTab || (keysLoaded && panelOpen);
+  const mounted = keysLoaded;
+  const open = keysLoaded && panelOpen;
 
   const [aiLoaded, setAiLoaded] = useState(false);
   useEffect(() => {
-    if (open && effectiveMode === "ai") setAiLoaded(true);
-  }, [open, effectiveMode]);
+    if (open) setAiLoaded(true);
+  }, [open]);
   const renderAi = hasComposer && aiLoaded;
-
-  const switchMode = (next: "shell" | "ai") => {
-    setMode(next);
-    requestAnimationFrame(() => {
-      if (next === "ai") c.textareaRef.current?.focus();
-      else if (activeLeafId != null) focusLeafInput(activeLeafId);
-    });
-  };
-
-  const modeRef = useRef(mode);
-  modeRef.current = mode;
-  const switchModeRef = useRef(switchMode);
-  switchModeRef.current = switchMode;
-  useEffect(() => {
-    if (!showToggle) return;
-    const onToggle = () =>
-      switchModeRef.current(modeRef.current === "shell" ? "ai" : "shell");
-    window.addEventListener(TOGGLE_BLOCK_INPUT_EVENT, onToggle);
-    return () => window.removeEventListener(TOGGLE_BLOCK_INPUT_EVENT, onToggle);
-  }, [showToggle]);
 
   if (!mounted) return null;
 
   const terminalChips = isTerminalTab ? (
     <>
       {os && <Chip tone="neutral" iconNode={<OsIcon os={os} />} title={os} />}
-      {nodeCurrent &&
-        (nodeManager && nodeVersions.length > 0 && controller ? (
-          <ChipMenu
-            icon={CodeIcon}
-            label={nodeCurrent}
-            title={`Node ${nodeCurrent} (click to switch)`}
-            disabled={blockMode !== "prompt"}
-          >
-            <NodeMenuContent
-              manager={nodeManager}
-              versions={nodeVersions}
-              current={nodeCurrent}
-              onUse={(version) =>
-                controller.submitCommand(nodeUseCommand(nodeManager, version))
-              }
-            />
-          </ChipMenu>
-        ) : (
-          <Chip tone="neutral" icon={CodeIcon} title="Node version">
-            {nodeCurrent}
-          </Chip>
-        ))}
-      {cwd &&
-        (controller ? (
-          <ChipMenu
-            icon={Folder01Icon}
-            label={homeRelativePath(cwd, home)}
-            title={`${cwd} (click to navigate)`}
-            truncate={false}
-            disabled={blockMode !== "prompt"}
-            onOpenChange={(open) => open && loadSubdirs()}
-          >
-            <DirectoryMenuContent
-              entries={subdirs ?? []}
-              onCd={(name) =>
-                controller.submitCommand(`cd ${quoteShellArg(name)}`)
-              }
-            />
-          </ChipMenu>
-        ) : (
-          <Chip tone="blue" icon={Folder01Icon} title={cwd} truncate={false}>
-            {homeRelativePath(cwd, home)}
-          </Chip>
-        ))}
-      {branch &&
-        (controller && loaded && branches.length > 0 ? (
-          <ChipMenu
-            icon={GitBranchIcon}
-            label={branch}
-            title={`Branch: ${branch} (click to switch)`}
-            disabled={blockMode !== "prompt"}
-          >
-            <BranchMenuContent
-              entries={branches}
-              current={branch}
-              onCheckout={(name) =>
-                controller.submitCommand(`git checkout ${quoteShellArg(name)}`)
-              }
-            />
-          </ChipMenu>
-        ) : (
-          <Chip tone="violet" icon={GitBranchIcon} title={`Branch: ${branch}`}>
-            {branch}
-          </Chip>
-        ))}
+      {nodeCurrent && nodeManager && nodeVersions.length > 0 && (
+        <Chip tone="neutral" icon={CodeIcon} title="Node version">
+          {nodeCurrent}
+        </Chip>
+      )}
+      {cwd && <Chip tone="blue" icon={Folder01Icon} title={cwd} truncate={false}>{homeRelativePath(cwd, home)}</Chip>}
+      {branch && <Chip tone="violet" icon={GitBranchIcon} title={`Branch: ${branch}`}>{branch}</Chip>}
       {shell && (
         <Chip tone="emerald" icon={CommandLineIcon}>
           {shell}
@@ -222,7 +88,7 @@ export function WorkspaceInputBar({
   ) : null;
 
   const content =
-    !hasComposer && !isBlockTab ? (
+    !hasComposer ? (
       <AiInputBarConnect onAdd={onConnect} />
     ) : (
       <div className="shrink-0 border-t border-border/60 bg-foreground/[0.02] px-3 py-2">
@@ -245,42 +111,14 @@ export function WorkspaceInputBar({
 
           <div className="flex items-end gap-2.5 rounded-lg px-2 py-1 ring-1 ring-border/30 transition-colors focus-within:bg-foreground/[0.02] focus-within:ring-border/60">
             <div className="relative min-w-0 flex-1">
-              {isBlockTab && controller && activeLeafId != null && (
-                <div className={cn(effectiveMode !== "shell" && "hidden")}>
-                  {blockMode === "plain" ? (
-                    <button
-                      type="button"
-                      className="text-sm text-muted-foreground hover:text-foreground"
-                      onClick={() => focusLeafInput(activeLeafId)}
-                    >
-                      Type directly in the terminal
-                    </button>
-                  ) : (
-                    <Suspense fallback={null}>
-                      <ShellInput
-                        leafId={activeLeafId}
-                        mode={blockMode}
-                        focused={effectiveMode === "shell"}
-                        onSubmit={controller.submitCommand}
-                        onInterrupt={controller.interrupt}
-                      />
-                    </Suspense>
-                  )}
-                </div>
-              )}
               {renderAi && (
-                <div className={cn(effectiveMode !== "ai" && "hidden")}>
+                <div>
                   <Suspense fallback={null}>
                     <AiComposerInput />
                   </Suspense>
                 </div>
               )}
             </div>
-            {showToggle && (
-              <div className="shrink-0 pb-px">
-                <ModeToggle mode={mode} onChange={switchMode} />
-              </div>
-            )}
           </div>
         </div>
       </div>
@@ -295,65 +133,5 @@ export function WorkspaceInputBar({
     >
       <div>{content}</div>
     </div>
-  );
-}
-
-function ModeToggle({
-  mode,
-  onChange,
-}: {
-  mode: "shell" | "ai";
-  onChange: (next: "shell" | "ai") => void;
-}) {
-  return (
-    <div className="relative grid shrink-0 grid-cols-2 rounded-md p-0.5 text-[10.5px] ring-1 ring-inset ring-border/35">
-      <span
-        aria-hidden
-        className="pointer-events-none absolute inset-y-0.5 left-0.5 w-[calc(50%-2px)] rounded-[4px] bg-accent/60 transition-transform duration-200 ease-out"
-        style={{
-          transform: mode === "ai" ? "translateX(100%)" : "translateX(0)",
-        }}
-      />
-      <SegButton
-        active={mode === "shell"}
-        icon={TerminalIcon}
-        label="Shell"
-        onClick={() => onChange("shell")}
-      />
-      <SegButton
-        active={mode === "ai"}
-        icon={AiContentGenerator02Icon}
-        label="AI"
-        onClick={() => onChange("ai")}
-      />
-    </div>
-  );
-}
-
-function SegButton({
-  active,
-  icon,
-  label,
-  onClick,
-}: {
-  active: boolean;
-  icon: typeof AiContentGenerator02Icon;
-  label: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "relative z-10 flex items-center justify-center gap-1 rounded-[4px] px-2 py-[2.5px] font-medium transition-colors",
-        active
-          ? "text-foreground/90"
-          : "text-muted-foreground/70 hover:text-foreground",
-      )}
-    >
-      <HugeiconsIcon icon={icon} size={11} strokeWidth={1.75} />
-      {label}
-    </button>
   );
 }

@@ -1,3 +1,9 @@
+import { usePreferencesStore } from "@/modules/settings/preferences";
+import {
+  currentWorkspaceEnv,
+  useWorkspaceEnvStore,
+  workspaceScopeKey,
+} from "@/modules/workspace";
 import { invoke } from "@tauri-apps/api/core";
 import {
   useCallback,
@@ -8,14 +14,8 @@ import {
 } from "react";
 import { toast } from "sonner";
 import {
-  currentWorkspaceEnv,
-  useWorkspaceEnvStore,
-  workspaceScopeKey,
-} from "@/modules/workspace";
-import { usePreferencesStore } from "@/modules/settings/preferences";
-import {
-  executeBatchMove,
   excludeNestedSources,
+  executeBatchMove,
   type FsMoveResult,
 } from "./batchMove";
 import { listenFsChanged, watchAdd, watchRemove } from "./watch";
@@ -411,6 +411,34 @@ export function useFileTree(rootPath: string | null, options?: Options) {
     [fetchChildren, addWatch, rootPath, scopeKey],
   );
 
+  /** Expands every ancestor of `path` (awaiting each level's children) so the
+   *  row exists for reveal — used by click-to-open from terminal output. */
+  const revealPath = useCallback(
+    async (path: string): Promise<void> => {
+      if (scopeKeyRef.current !== scopeKey) return;
+      if (!rootPath || !path.startsWith(rootPath)) return;
+      const relative = path
+        .slice(rootPath.length)
+        .replace(/^\//, "")
+        .split("/");
+      let current = rootPath;
+      for (const part of relative) {
+        current = `${current}/${part}`;
+        if (!expandedRef.current.has(current)) {
+          setExpanded((curr) => new Set(curr).add(current));
+          addWatch(current);
+          await fetchChildren(current);
+        }
+      }
+      if (!expandedRef.current.has(path)) {
+        setExpanded((curr) => new Set(curr).add(path));
+        addWatch(path);
+        await fetchChildren(path);
+      }
+    },
+    [rootPath, fetchChildren, addWatch, scopeKey],
+  );
+
   // --- mutations ---
 
   const beginCreate = useCallback(
@@ -609,6 +637,7 @@ export function useFileTree(rootPath: string | null, options?: Options) {
     renaming,
     toggle,
     expand,
+    revealPath,
     refresh,
     beginCreate,
     cancelCreate,

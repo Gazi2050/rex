@@ -885,10 +885,7 @@ const StreamHandler = struct {
                 self.readonly.vt(action, value);
                 switch (value.action) {
                     .fresh_line_new_prompt, .prompt_start => try self.emitEvent(.prompt_start, &.{}),
-                    .end_prompt_start_input, .end_prompt_start_input_terminate_eol => {
-                        const block_input = [_]u8{@intFromBool(!std.mem.eql(u8, value.options_unvalidated, "rex_blocks=0"))};
-                        try self.emitEvent(.prompt_end, &.{&block_input});
-                    },
+                    .end_prompt_start_input, .end_prompt_start_input_terminate_eol => try self.emitEvent(.prompt_end, &.{}),
                     .end_input_start_output => {
                         var marker: [4]u8 = undefined;
                         std.mem.writeInt(u32, &marker, try self.semantic_markers.capture(self.alloc, self.term), .little);

@@ -44,23 +44,6 @@ describe.each([
         terminal.dispose();
       }
     });
-    it("reports when a shell requires direct terminal input", () => {
-      const terminal = ghostty.createTerminal(16, 4);
-      try {
-        terminal.write(
-          new TextEncoder().encode(
-            "\x1b]133;B;rex_blocks=0\x07\x1b]133;B\x07",
-          ),
-        );
-        expect(terminal.drainEvents()).toEqual([
-          { type: "prompt-end", blockInput: false },
-          { type: "prompt-end" },
-        ]);
-      } finally {
-        terminal.dispose();
-      }
-    });
-
     it("tracks exact command boundaries through batching, reflow and reset", () => {
       const terminal = ghostty.createTerminal(16, 4);
       try {

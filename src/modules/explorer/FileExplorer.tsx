@@ -7,6 +7,13 @@ import {
   ContextMenuShortcut,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
+import { IS_MAC } from "@/lib/platform";
+import { cn } from "@/lib/utils";
+import type { GitStatusSnapshot } from "@/modules/ai/lib/native";
+import { usePreferencesStore } from "@/modules/settings/preferences";
+import { useGlobalShortcuts } from "@/modules/shortcuts";
+import type { TerminalPathDropTarget } from "@/modules/terminal";
+import { useWorkspaceEnvStore } from "@/modules/workspace";
 import {
   FileAddIcon,
   Folder01Icon,
@@ -27,45 +34,40 @@ import {
   useRef,
   useState,
 } from "react";
-import { IS_MAC } from "@/lib/platform";
-import { cn } from "@/lib/utils";
 import { ExplorerSearch, type ExplorerSearchHandle } from "./ExplorerSearch";
-import {
-  EntryRow,
-  PendingRow,
-  StatusRow,
-  type RowActions,
-  type SelectModifiers,
-} from "./TreeRow";
+import { FileIcon, FolderIcon } from "./FileIcon";
 import { InlineInput } from "./InlineInput";
+import {
+  isPasteShortcut,
+  parentDir as parentOf,
+  pasteClipboardFiles,
+  pasteTargetDir,
+} from "./lib/clipboardPaste";
 import {
   copyToClipboard,
   relativePath,
   revealInFinder,
 } from "./lib/contextActions";
-import { FileIcon, FolderIcon } from "./FileIcon";
-import {
-  isPasteShortcut,
-  pasteClipboardFiles,
-  pasteTargetDir,
-  parentDir as parentOf,
-} from "./lib/clipboardPaste";
-import { useWorkspaceEnvStore } from "@/modules/workspace";
+import type { GitStatusCode } from "./lib/gitStatusUtils";
 import { COMPACT_CONTENT, COMPACT_ITEM } from "./lib/menuItemClass";
 import { useExplorerDnd } from "./lib/useExplorerDnd";
 import { useExplorerFileDrop } from "./lib/useExplorerFileDrop";
 import { useFileTree } from "./lib/useFileTree";
 import { useGitStatus } from "./lib/useGitStatus";
-import type { GitStatusCode } from "./lib/gitStatusUtils";
-import { useGlobalShortcuts } from "@/modules/shortcuts";
-import { usePreferencesStore } from "@/modules/settings/preferences";
-import type { GitStatusSnapshot } from "@/modules/ai/lib/native";
-import type { TerminalPathDropTarget } from "@/modules/terminal";
+import {
+  EntryRow,
+  PendingRow,
+  type RowActions,
+  type SelectModifiers,
+  StatusRow,
+} from "./TreeRow";
 
 export type FileExplorerHandle = {
   focus: () => void;
   isFocused: () => boolean;
   focusSearch: () => void;
+  /** Expands the ancestors of `path`, selects and scrolls to its row. */
+  revealPath: (path: string) => void;
 };
 
 type Props = {
@@ -289,6 +291,10 @@ export const FileExplorer = memo(
       tree.pendingCreate,
       lookupGitStatus,
     ]);
+    const entryIndexRef = useRef(entryIndexByPath);
+    useLayoutEffect(() => {
+      entryIndexRef.current = entryIndexByPath;
+    }, [entryIndexByPath]);
 
     const rowActions = useMemo<RowActions>(
       () => ({
@@ -504,8 +510,22 @@ export const FileExplorer = memo(
           setIsSearchOpen(true);
           searchRef.current?.focus();
         },
+        revealPath: (path: string) => {
+          void tree.revealPath(path).then(() => {
+            collapseSelectionTo(path);
+            // The row index exists only after the expanded ancestors render;
+            // retry a few frames before giving up silently.
+            let tries = 0;
+            const scroll = () => {
+              scrollEntryIntoView(path);
+              if (!entryIndexRef.current.has(path) && ++tries < 10)
+                requestAnimationFrame(scroll);
+            };
+            requestAnimationFrame(scroll);
+          });
+        },
       }),
-      [entryPaths, scrollEntryIntoView, collapseSelectionTo],
+      [entryPaths, scrollEntryIntoView, collapseSelectionTo, tree],
     );
 
     useGlobalShortcuts({

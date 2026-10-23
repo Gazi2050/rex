@@ -43,7 +43,6 @@ export type TerminalTab = TabBase & {
   cwd?: string;
   paneTree: PaneNode;
   activeLeafId: number;
-  blocks?: boolean;
   /** AI agent cannot read buffer / context of this terminal. */
   private?: boolean;
   /** User-set label that overrides the cwd-derived name. Survives cd. */
@@ -741,7 +740,6 @@ export function useTabs(initial?: Partial<TerminalTab>) {
         cwd,
         paneTree: { kind: "leaf", id: leafId, cwd },
         activeLeafId: leafId,
-        blocks: true,
       },
     ]);
     setActiveId(tabId);

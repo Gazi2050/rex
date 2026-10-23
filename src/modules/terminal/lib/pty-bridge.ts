@@ -103,7 +103,6 @@ export async function openPty(
   rows: number,
   handlers: PtyHandlers,
   cwd?: string,
-  blocks?: boolean,
   shell?: string,
   paneId?: number,
 ): Promise<PtySession> {
@@ -159,7 +158,6 @@ export async function openPty(
       rows,
       cwd: cwd ?? null,
       workspace: currentWorkspaceEnv(),
-      blocks: blocks ?? false,
       shell: shell ?? null,
       paneId: paneId ?? null,
       presentation: presentation ?? null,

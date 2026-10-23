@@ -98,7 +98,6 @@ import {
   hasLeaf,
   isTerminalSurfaceTarget,
   leafIds,
-  navigateFocusedBlocks,
   type PaneBounds,
   ptyIdForLeaf,
   type TerminalPaneHandle,
@@ -137,10 +136,7 @@ import {
   useState,
 } from "react";
 import { CloseDialogs } from "./components/CloseDialogs";
-import {
-  TOGGLE_BLOCK_INPUT_EVENT,
-  WorkspaceInputBar,
-} from "./components/WorkspaceInputBar";
+import { WorkspaceInputBar } from "./components/WorkspaceInputBar";
 import { WorkspaceSurface } from "./components/WorkspaceSurface";
 import {
   hasOpenPathTab,
@@ -371,7 +367,6 @@ export default function App() {
 
   const activeTab = tabs.find((t) => t.id === activeId);
   const isTerminalTab = activeTab?.kind === "terminal";
-  const isBlockTab = activeTerminalTab?.blocks === true;
   const isEditorTab = activeTab?.kind === "editor";
   const isGitHistoryTab = activeTab?.kind === "git-history";
 
@@ -666,6 +661,20 @@ export default function App() {
     [activeLeafId],
   );
 
+  /** Click-to-open from terminal output: files open in the editor, folders
+   *  reveal in the explorer (sidebar flips to the Files view if needed). */
+  const handleTerminalOpenPath = useCallback(
+    (path: string, kind: "file" | "dir") => {
+      if (kind === "dir") {
+        openSidebarView("explorer");
+        explorerRef.current?.revealPath(path);
+      } else {
+        openFileTab(path);
+      }
+    },
+    [openSidebarView, openFileTab],
+  );
+
   const cdInNewTab = useCallback(
     (path: string) => {
       const tabId = newTab(path);
@@ -926,10 +935,6 @@ export default function App() {
       "terminal.clear": () => {
         clearFocusedTerminal();
       },
-      "terminal.toggleInput": () =>
-        window.dispatchEvent(new CustomEvent(TOGGLE_BLOCK_INPUT_EVENT)),
-      "blocks.prev": () => navigateFocusedBlocks(-1),
-      "blocks.next": () => navigateFocusedBlocks(1),
       "search.focus": () => {
         const editor = editorRefs.current.get(activeId);
         if (editor) editor.openSearch();
@@ -1025,13 +1030,6 @@ export default function App() {
         const target =
           (e.target as HTMLElement | null) ?? document.activeElement;
         return !isTerminalSurfaceTarget(target);
-      }
-      if (
-        id === "terminal.toggleInput" ||
-        id === "blocks.prev" ||
-        id === "blocks.next"
-      ) {
-        return !(activeTab?.kind === "terminal" && activeTab.blocks === true);
       }
       if (id === "sidebar.toggle") {
         // Ctrl+B is also Claude Code's "run in background" key. While a terminal
@@ -1537,6 +1535,7 @@ export default function App() {
                         onCwd={handleTerminalCwd}
                         onExit={handleLeafExit}
                         onFocusLeaf={handleFocusLeaf}
+                        onOpenPath={handleTerminalOpenPath}
                         registerEditorHandle={registerEditorHandle}
                         onEditorDirtyChange={handleEditorDirty}
                         onEditorCloseTab={disposeTab}
@@ -1551,7 +1550,6 @@ export default function App() {
                     </div>
 
                     <WorkspaceInputBar
-                      isBlockTab={isBlockTab}
                       isTerminalTab={isTerminalTab}
                       activeLeafId={activeLeafId}
                       cwd={activeCwd}

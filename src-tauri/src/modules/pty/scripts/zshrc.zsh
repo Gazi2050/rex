@@ -24,6 +24,14 @@ if [[ -z "$__REX_HOOKS_LOADED" ]]; then
   __REX_HOOKS_LOADED=1
   autoload -Uz add-zsh-hook 2>/dev/null
 
+  # Explicit high-contrast truecolor styles keep ls directories distinct
+  # from ordinary files, independent of the host ANSI palette.
+  export LS_COLORS="di=01;38;2;77;166;255:ln=01;38;2;95;220;220:so=01;35:do=01;35:ex=01;32:bd=01;33:cd=01;33:or=00;31:mi=00;31:*.tar=01;31:*.tgz=01;31:*.zip=01;31:*.jpg=00;35:*.jpeg=00;35:*.png=00;35:*.svg=00;35"
+  unalias ls 2>/dev/null
+  ls() {
+    command ls --color=always "$@"
+  }
+
   # URL-encode $PWD byte-wise so multi-byte paths stay valid in the `file://`
   # URI emitted via OSC 7. `no_multibyte` forces ${s[i]} to index bytes (not
   # code points), and LC_ALL=C keeps the [a-zA-Z0-9...] class single-byte.
@@ -59,22 +67,7 @@ if [[ -z "$__REX_HOOKS_LOADED" ]]; then
       [[ -n "$_rex_branch" ]] \
         && printf '\e]6637;branch=%s\e\\' "$(_rex_urlencode "$_rex_branch")"
     fi
-    # In block mode the host renders its own input bar, so suppress the shell
-    # prompt entirely (keep only the OSC 133 B marker) and add a leading blank
-    # line so frozen command blocks get vertical breathing room.
-    if [[ -n "$REX_BLOCKS" ]]; then
-      # Spacing reserved for the host-drawn block header lives in the prompt
-      # (the grid is WebGL, not CSS). Later prompts get two blank rows: the
-      # upper one is the previous block's end gap (above its divider), the lower
-      # one is this command's header row. The very first prompt has no block
-      # above it, so it gets a single row (header only) to avoid a tall top gap.
-      if [[ -n "$_rex_block_seen" ]]; then
-        PS1=$'\n\n%{\e]133;B\e\\%}'
-      else
-        PS1=$'\n%{\e]133;B\e\\%}'
-      fi
-      RPROMPT=''
-    elif [[ "$PS1" != *$'\e]133;B\e\\'* ]]; then
+    if [[ "$PS1" != *$'\e]133;B\e\\'* ]]; then
       # Re-inject prompt-end marker in case a framework rebuilt PS1 (p10k, starship).
       PS1=$'%{\e]133;B\e\\%}'"$PS1"
     fi
@@ -82,9 +75,6 @@ if [[ -z "$__REX_HOOKS_LOADED" ]]; then
   }
 
   _rex_preexec() {
-    # Mark that a real command ran, so the next prompt switches from one blank
-    # row (first prompt, no block above) to two (end gap + header row).
-    [[ -n "$REX_BLOCKS" ]] && _rex_block_seen=1
     local cmd="${1//[[:cntrl:]]/ }"
     printf '\e]133;C;%s\e\\' "${cmd[1,256]}"
   }

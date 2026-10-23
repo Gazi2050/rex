@@ -1809,9 +1809,7 @@ function decodeTerminalEvent(
     case 7:
       return { type: "prompt-continuation" };
     case 8:
-      return payload.byteLength > 0 && payload[0] === 0
-        ? { type: "prompt-end", blockInput: false }
-        : { type: "prompt-end" };
+      return { type: "prompt-end" };
     case 9: {
       if (payload.byteLength < 4) return null;
       const marker = new DataView(payload.buffer, payload.byteOffset, payload.byteLength).getUint32(0, true);

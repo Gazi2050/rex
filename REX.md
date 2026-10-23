@@ -54,7 +54,7 @@ no texture (`windowFrameNeeded`). `SurfaceFramePacer` decides which panes prepar
 in a frame; a pane whose rectangle moved always does. Pane DOM is transparent
 once the canvas has shown the pane's first frame (until then it paints the theme
 colour, so a tab switch never flashes the card behind); scrollbars, selection,
-IME, block overlays and cursor styles stay per-pane DOM above the canvas.
+IME, selection and cursor styles stay per-pane DOM above the canvas.
 A presented WebGPU canvas is never destroyed, unconfigured, shrunk or
 dropped while the runtime lives: WebKit (macOS 26) keeps the swapchain of such a
 canvas in the WebContent process for good (three buffers, about 30 MiB for a
@@ -115,7 +115,7 @@ while something is highlighted, so none of them rewrites cell records.
 Geometry is pixel exact. Fonts are measured at size times ratio and cells are
 whole device pixels (`TerminalFontMetrics.deviceCell*`). `cellWidth` and
 `cellHeight` are the CSS size, device divided by ratio, and are what fit,
-hit-testing, selection, links and block overlays use. A pane's rectangle in the
+hit-testing, selection and links use. A pane's rectangle in the
 window canvas holds at least cols by rows device cells (slack is background, the
 scissor clips the rest) and the canvas origin is translated onto the device
 pixel grid when the observer, ratio or window size changes. A ratio change
@@ -153,25 +153,6 @@ closed, restarted, or replaced session.
 xterm, its addons, CSS, snapshots, session pool, and dormant byte ring are removed.
 Unsupported graphics produce a visible error with retry instead of changing models.
 
-Command blocks use parser-time Ghostty tracked pins, including endpoint columns,
-so command ranges survive reflow and exclude following prompts and commands.
-The native marker ring is capped at 2,048 pins; JavaScript history is capped at
-1,000 blocks and 512 KiB of estimated UTF-16 command/cwd text. Block implementation
-and UI load only for block sessions, and hidden/occluded block presentation stops.
-Block search yields after 128 rows or four milliseconds, retains at most 500
-matches, and cancels obsolete queries. Block copy, search, sticky headers, navigation, Ask AI, rerun, shared shell input,
-and selection all use the same persistent Ghostty model.
-Block chrome commits with its matching renderer frame; it is recomputed only when
-the viewport origin, scrollback, size, cell height, block mode or block set
-(`GhosttyBlocks.revision`) changed, so frames that only repaint cells cost no
-block work and no React commit. The per-frame path reads cached cell metrics, never
-layout, and the shell/prompt input switch runs on block-mode changes, not per PTY
-chunk. Command-editor focus does
-not lower active-pane cadence. Divider padding is presentation-only and does not
-change copied command boundaries. Scrollbars preserve native fractional positions
-and ignore delayed programmatic scroll events. Hidden output does no surface DOM
-or search-mask work until presentation resumes.
-
 Terminal clipboard shortcuts use the native text clipboard plugin on all desktop
 platforms. Context clicks expose the selected text through the input element to
 restore the webview's native text menu; no persistent DOM scrollback is maintained.
@@ -181,10 +162,8 @@ WebKit's caret animation (a display link at display rate) running at ~3 % CPU an
 ~250 wakeups/s while idle, a non-collapsed selection paints no caret (0.2 %, ~10/s).
 It re-arms after input, key release and focus, never during IME composition, and
 native Copy/Cut without terminal text must not copy the placeholder.
-Unclaimed macOS Command shortcuts reach the native menu after explicit clipboard,
-block-editor, and readline bindings, including when Kitty keyboard mode is active.
-The block prompt retains an enabled terminal input proxy for native menus and
-routes editing keys, composed text and paste back to its command editor.
+Unclaimed macOS Command shortcuts reach the native menu after explicit clipboard
+and readline bindings, including when Kitty keyboard mode is active.
 Character drags retain a native selection pin from pointerdown, including before
 the first pointermove. Unmoved clicks and lost captures discard provisional pins.
 Key encoding supplies the base character required by Kitty keyboard mode; plain
@@ -192,17 +171,10 @@ keys and key releases also use Ghostty encoding when the application requests it
 Terminal text uses the configured font, an installed Nerd Font when detected,
 or bundled JetBrains Mono. Private-use prompt symbols require an installed font
 that supplies them; Rex does not ship a separate symbol font. Native color
-emoji remain on the system fallback path. Rerun requires the complete command
-submitted through Rex; truncated shell labels are never executed.
-Primary-screen full erase, scrollback erase, and terminal reset invalidate block
-pins at parse time and clear block chrome, selection, and search. Commands after
-an erase in the same output chunk retain their new pins. Alternate-screen erases
-preserve primary block history. Block scrollbar status dots are removed along
-with their timers and history scans.
+emoji remain on the system fallback path.
 
-The shared command bar activates after shell integration confirms prompt input.
-Bare shells keep direct terminal input. Bash before 4.4 reports
-`OSC 133;B;rex_blocks=0` and keeps its native prompt because it lacks PS0.
+The shared command bar is for AI interaction; shell commands are entered directly
+in the live terminal surface.
 
 Settings offer Automatic or WebGL for new terminals, plus opt-in screen reader
 output. Accessible text is limited to 256 rows / 64 KiB and refreshes at most four
@@ -366,7 +338,7 @@ Single-window React app. Path alias `@/*` → `src/*`. Tabs are a tagged union (
 
 Each module is self-contained, exports a thin barrel via `index.ts`, and owns its hooks under `lib/`.
 
-- **terminal/** - `TerminalStack` keeps live leaves mounted. `useGhosttyTerminalSession` owns one persistent model and PTY per leaf; GPU/WebGL surfaces lease shared presentation resources independently. `terminalSessionApi.ts` exposes renderer-neutral product actions. OSC 7 paths and OSC 52 payloads are validated by pure parsers; Ghostty supplies OSC 133 events and native command anchors to the lazy block controller. WebGPU can fail over to WebGL without replacing the model, PTY, selection, search, or block history. Hidden models keep parsing through bounded PTY transport while presentation is released. There is no snapshot replay or second terminal parser. Theme colors come from the central theme engine.
+- **terminal/** - `TerminalStack` keeps live leaves mounted. `useGhosttyTerminalSession` owns one persistent model and PTY per leaf; GPU/WebGL surfaces lease shared presentation resources independently. `terminalSessionApi.ts` exposes renderer-neutral product actions. OSC 7 paths and OSC 52 payloads are validated by pure parsers; Ghostty supplies OSC 133 prompt and command lifecycle events. WebGPU can fail over to WebGL without replacing the model, PTY, selection or search. Hidden models keep parsing through bounded PTY transport while presentation is released. There is no snapshot replay or second terminal parser. Theme colors come from the central theme engine.
 - **editor/** - CodeMirror 6 stack (`EditorStack` mirrors `TerminalStack`). `extensions.ts` configures language modes; supports vim mode. Buffers live in LF space and the original EOL (`lib/eol.ts`, majority-vote detection) is restored on save; indent unit/tab size are detected per file (`lib/indent.ts`) via a per-pane compartment. Saves are conflict-checked against the disk mtime returned by `fs_read_file`/`fs_write_file` (mismatch → warning toast with explicit Overwrite, never silent last-writer-wins); external format-on-save only applies the disk read-back if the doc is unchanged since the save snapshot. Files over 10 MB offer "Open anyway" (hard cap 50 MB, `force` arg); above 4 MB syntax highlighting and LSP stay off. Cmd-F routes to CodeMirror's own search panel (find/replace/regex) when an editor tab is active, Ctrl-G opens go-to-line; both panels styled in `chromeTheme.ts`. Format-on-save formatters live in `lib/externalFormat.ts` (`FORMATTERS` registry: biome, prettier, ruff, rustfmt, gofmt, clang-format, shfmt, zig fmt, plus a custom `{file}` command template); `resolveFormatter` applies per-language overrides (`editorFormatterByLang`) over the global default, and a global external default only runs on languages its tool understands. Diff panes resolve the language before mounting CodeMirror: a late compartment reconfigure leaves the merge view's deleted-chunk widgets unhighlighted. AI inline completion (`lib/autocomplete/`) sends the buffer's indent unit with the request and normalizes unambiguous tab/space mismatches in responses (`normalizeIndent.ts`); triggering is `autocompleteTrigger` auto or manual, with `editor.aiComplete` / `editor.codeComplete` registry shortcuts (guarded to editor tabs so the keys fall through to terminals), and Tab accepts an open completion popup before the ghost. Multi-line ghosts render first-line-inline plus a block widget below the line (never inline `<br>`s); a closers-only line-suffix (cursor inside `fn(|)`) is hidden and re-appended after the block so the preview equals the accept result, and a line-suffix with real code caps the ghost to one line (`capToLineSuffix`). Suggestions echoing the recent prefix are dropped, multi-line suggestions and closing brackets never start on a line that ends with `;`, and closer-only lines are reindented from the previous line (`trimSuggestion`/`reindentClosers`, all tested). Markdown editing is GFM (`markdownLanguage` base) with fenced-code highlighting resolved through the shared lazy language registry, Cmd/Ctrl+Click URLs, and clickable task checkboxes (`markdownExtras.ts`, all inside the lazy markdown chunk; the eager-budget test enforces this). Dotenv files (`.env`, `.env.*`, and `*.env`) use the lazy shell grammar. Editor theme is decoupled from the app theme: the `editorTheme` pref is `"auto" | EditorThemeId` (default `"auto"`), resolved at render time by `useEditorThemeExt` via `resolveEditorThemeId`. In `auto` the editor follows the active app theme's `editorTheme[mode]` pairing (live, never stale); an explicit pick overrides. Theme ids + labels live in `settings/store.ts` (`EDITOR_THEMES`/`EDITOR_THEME_LABELS`); the matching extensions in `editor/lib/themes.ts` (`EDITOR_THEME_EXT`). Prebuilt `@uiw` themes plus locally-built ones in `editor/lib/cmThemes.ts` (Kanagawa wave/lotus/dragon, Everforest, Dracula, Solarized, Catppuccin, Rosé Pine) via `createTheme` (no extra deps). The three CM surfaces (`EditorPane`, `AiDiffPane`, `GitDiffPane`) all read the theme through `useEditorThemeExt`.
   Editor code size is stored separately as `editorFontSize` and does not affect `terminalFontSize`.
 - **explorer/** - file tree with Catppuccin icons, fuzzy search, keyboard nav, inline rename, context actions. Backslash-aware `basename`. Icons are lazy: `iconResolver.ts` is the startup-safe shell and fetches the ~360 kB set (`iconEngine.ts`) when the first `FileIcon`/`FolderIcon` mounts; until then those components render a same-size blank slot that fades the icon in, and the set is never in either window's startup graph. The tree stays mounted when the sidebar collapses but is `visible={false}`: no native fs watchers (`watchRegistry.ts` disarms them), no `fs:changed` subscription, no drop listener and no reloads; showing it re-registers the watchers and reloads loaded directories once.

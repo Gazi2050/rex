@@ -494,7 +494,7 @@ export type GhosttyTerminalEvent =
     }
   | { readonly type: "prompt-start" }
   | { readonly type: "prompt-continuation" }
-  | { readonly type: "prompt-end"; readonly blockInput?: boolean }
+  | { readonly type: "prompt-end" }
   | { readonly type: "end-of-input"; readonly marker?: number; readonly command?: string }
   | {
       readonly type: "end-of-command";

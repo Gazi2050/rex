@@ -6,6 +6,7 @@ import {
   lazy,
   memo,
   Suspense,
+  useCallback,
   useEffect,
   useImperativeHandle,
   useRef,
@@ -13,13 +14,14 @@ import {
 } from "react";
 import type { TerminalBackendKind } from "./backend/contracts";
 import { resolvedTerminalBackend } from "./backend/selection";
-import { ghosttyBlocks } from "./ghostty/ghosttyBlockSessions";
 import { TerminalScrollbar } from "./ghostty/TerminalScrollbar";
 import {
-  ghosttyBlockGeometry,
+  ghosttyTerminalGeometry,
   useGhosttyTerminalSession,
 } from "./ghostty/useGhosttyTerminalSession";
-import { focusLeafInput } from "./lib/terminalSessionApi";
+import { cleanPathToken, wordRangeAt } from "./lib/terminalPathHit";
+import { resolvePathToken } from "./lib/terminalPathResolve";
+import { leafCwd } from "./lib/terminalSessionApi";
 
 export type TerminalPaneHandle = {
   write: (data: string) => void;
@@ -36,17 +38,16 @@ export type TerminalPaneProps = {
   /** This leaf is the active pane within its tab and receives auto-focus. */
   focused?: boolean;
   initialCwd?: string;
-  /** Enable command-block decorations (OSC 133) for this terminal. */
-  blocks?: boolean;
   onSearchReady?: (leafId: number, addon: TerminalSearchController) => void;
   onExit?: (leafId: number, code: number) => void;
   onCwd?: (leafId: number, cwd: string) => void;
+  /** Click-to-open: a clicked file opens in the editor, a folder in the explorer. */
+  onOpenPath?: (path: string, kind: "file" | "dir") => void;
 };
 
 const TerminalAccessibleOutput = lazy(
   () => import("./ghostty/TerminalAccessibleOutput"),
 );
-const GhosttyBlockOverlay = lazy(() => import("./ghostty/GhosttyBlockOverlay"));
 
 const GhosttyTerminalPane = memo(
   forwardRef<
@@ -60,10 +61,10 @@ const GhosttyTerminalPane = memo(
       visible,
       focused = true,
       initialCwd,
-      blocks = false,
       onSearchReady,
       onExit,
       onCwd,
+      onOpenPath,
       backend,
     },
     ref,
@@ -81,12 +82,10 @@ const GhosttyTerminalPane = memo(
       visible,
       focused,
       initialCwd,
-      blocks,
       onSearchReady: (search) => onSearchReady?.(leafId, search),
       onExit: (code) => onExit?.(leafId, code),
       onCwd: (cwd) => onCwd?.(leafId, cwd),
     });
-
     useEffect(() => {
       void resolvedMode;
       void activeTheme;
@@ -105,74 +104,178 @@ const GhosttyTerminalPane = memo(
       [session],
     );
 
+    // Click-to-open: a clicked token that stats to a real file/folder opens
+    // in the editor/explorer. Hover adds an underline under the token using
+    // the same measured cell geometry as hit-testing.
+    const lastTokenRef = useRef<string | null>(null);
+    const resolvedTokenRef = useRef<string | null>(null);
+    const hoverSeqRef = useRef(0);
+    const pointerRef = useRef<{ x: number; y: number } | null>(null);
+    const [linkHint, setLinkHint] = useState<{
+      left: number;
+      top: number;
+      width: number;
+    } | null>(null);
+
+    const hitTest = useCallback(
+      (clientX: number, clientY: number) => {
+        const geometry = ghosttyTerminalGeometry(leafId);
+        const model = session.model;
+        const paneRect = containerRef.current?.getBoundingClientRect();
+        if (
+          !geometry ||
+          !model ||
+          !paneRect ||
+          geometry.cellWidth <= 0 ||
+          geometry.height <= 0
+        )
+          return null;
+        const col = Math.floor((clientX - geometry.left) / geometry.cellWidth);
+        const row = Math.floor((clientY - geometry.top) / geometry.height);
+        if (col < 0 || row < 0 || row >= model.rows) return null;
+        const cells = model.readCellLine?.(model.bufferLineAtViewportRow(row));
+        if (!cells) return null;
+        const line = cells.join("");
+        const range = wordRangeAt(line, col);
+        if (!range) return null;
+        const token = cleanPathToken(line.slice(range.start, range.end));
+        if (!token || token.length > 512) return null;
+        return {
+          token,
+          rect: {
+            left:
+              geometry.left - paneRect.left + range.start * geometry.cellWidth,
+            // Place the rule just above the cell's lower edge, clear of glyphs.
+            top: geometry.top - paneRect.top + (row + 1) * geometry.height - 2,
+            width: (range.end - range.start) * geometry.cellWidth,
+          },
+        };
+      },
+      [leafId, session.model],
+    );
+
+    const openHit = async (hit: { token: string }): Promise<boolean> => {
+      const resolved = await resolvePathToken(hit.token, leafCwd(leafId));
+      if (!resolved) return false;
+      hoverSeqRef.current += 1;
+      lastTokenRef.current = null;
+      resolvedTokenRef.current = null;
+      setLinkHint(null);
+      onOpenPath?.(resolved.path, resolved.kind);
+      return true;
+    };
+
+    useEffect(() => {
+      const reposition = () => {
+        const pointer = pointerRef.current;
+        if (!pointer) return;
+        const hit = hitTest(pointer.x, pointer.y);
+        if (hit && hit.token === lastTokenRef.current) {
+          if (hit.token === resolvedTokenRef.current) setLinkHint(hit.rect);
+          return;
+        }
+        setLinkHint(null);
+      };
+      window.addEventListener("resize", reposition);
+      return () => window.removeEventListener("resize", reposition);
+    }, [hitTest]);
+
     return (
       <div
         className="zoom-exempt relative h-full w-full overflow-hidden"
         style={{
           visibility: visible ? "visible" : "hidden",
           pointerEvents: visible ? "auto" : "none",
+          cursor: linkHint ? "pointer" : undefined,
         }}
         onPointerDownCapture={
-          blocks
-            ? (event) => {
-                down.current =
-                  event.button === 0 &&
-                  event.detail === 1 &&
-                  !event.shiftKey &&
-                  !event.altKey &&
-                  !event.metaKey &&
-                  !event.ctrlKey &&
-                  containerRef.current?.contains(event.target as Node)
-                    ? { x: event.clientX, y: event.clientY }
-                    : null;
-              }
-            : undefined
+          (event) => {
+            down.current =
+              event.button === 0 &&
+              event.detail === 1 &&
+              !event.shiftKey &&
+              !event.altKey &&
+              !event.metaKey &&
+              !event.ctrlKey &&
+              containerRef.current?.contains(event.target as Node)
+                ? { x: event.clientX, y: event.clientY }
+                : null;
+          }
         }
         onPointerUp={
-          blocks
-            ? (event) => {
-                // Scrollbar clicks are drags, not block selection or focus.
-                if (
-                  (event.target as HTMLElement | null)?.closest(
-                    "[data-terminal-scrollbar]",
-                  )
-                )
-                  return;
-                const origin = down.current;
-                down.current = null;
-                const state = ghosttyBlocks(leafId);
-                const geometry = ghosttyBlockGeometry(leafId);
-                if (
-                  origin &&
-                  geometry &&
-                  geometry.height > 0 &&
-                  Math.hypot(
-                    event.clientX - origin.x,
-                    event.clientY - origin.y,
-                  ) <= 4 &&
-                  !state?.model?.trackedSelection?.()
-                ) {
-                  const row = Math.floor(
-                    (event.clientY - geometry.top) / geometry.height,
-                  );
-                  if (state?.model && row >= 0 && row < state.model.rows)
-                    state.controller?.selectAtLine(
-                      state.model.bufferLineAtViewportRow(row),
-                    );
-                }
-                // Clicks land focus in the input — the keyboard surface for
-                // every mode (raw keys while a program runs).
-                if (
-                  state &&
-                  containerRef.current?.contains(event.target as Node)
-                )
-                  focusLeafInput(leafId);
-              }
-            : undefined
+          (event) => {
+            if (
+              (event.target as HTMLElement | null)?.closest(
+                "[data-terminal-scrollbar]",
+              )
+            )
+              return;
+            const origin = down.current;
+            down.current = null;
+            if (
+              origin &&
+              Math.hypot(event.clientX - origin.x, event.clientY - origin.y) <=
+                4 &&
+              !session.getSelection()
+            ) {
+              session.focus();
+              const hit = hitTest(event.clientX, event.clientY);
+              void (async () => {
+                if (hit && (await openHit(hit))) return;
+              })();
+            }
+          }
+        }
+        onPointerMove={
+          (event) => {
+            pointerRef.current = { x: event.clientX, y: event.clientY };
+            const hit = hitTest(event.clientX, event.clientY);
+            if (hit && hit.token === lastTokenRef.current) {
+              if (hit.token === resolvedTokenRef.current)
+                setLinkHint(hit.rect);
+              return;
+            }
+            lastTokenRef.current = hit?.token ?? null;
+            resolvedTokenRef.current = null;
+            setLinkHint(null);
+            if (!hit) return;
+            const seq = ++hoverSeqRef.current;
+            void (async () => {
+              const resolved = await resolvePathToken(
+                hit.token,
+                leafCwd(leafId),
+              );
+              if (hoverSeqRef.current !== seq) return;
+              if (!resolved) return;
+              lastTokenRef.current = hit.token;
+              resolvedTokenRef.current = hit.token;
+              setLinkHint(hit.rect);
+            })();
+          }
+        }
+        onPointerLeave={
+          () => {
+            pointerRef.current = null;
+            lastTokenRef.current = null;
+            resolvedTokenRef.current = null;
+            hoverSeqRef.current += 1;
+            setLinkHint(null);
+          }
         }
         data-terminal-backend={backend}
       >
         <div ref={containerRef} className="absolute inset-0" />
+        {linkHint && (
+          <div
+            aria-hidden
+            className="pointer-events-none absolute z-10 h-[2px] rounded-full bg-primary shadow-[0_0_3px_var(--primary)]"
+            style={{
+              left: `${linkHint.left}px`,
+              top: `${linkHint.top}px`,
+              width: `${linkHint.width}px`,
+            }}
+          />
+        )}
         {screenReader && session.model && (
           <Suspense fallback={null}>
             <TerminalAccessibleOutput
@@ -181,11 +284,6 @@ const GhosttyTerminalPane = memo(
               focused={focused}
               onExit={session.focus}
             />
-          </Suspense>
-        )}
-        {blocks && (
-          <Suspense fallback={null}>
-            <GhosttyBlockOverlay leafId={leafId} />
           </Suspense>
         )}
         <TerminalScrollbar leafId={leafId} />

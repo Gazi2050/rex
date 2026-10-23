@@ -27,6 +27,10 @@ end
 
 set -g __REX_HOST (uname -n 2>/dev/null; or echo localhost)
 
+# Explicit high-contrast truecolor styles keep ls directories distinct
+# from ordinary files, independent of the host ANSI palette.
+set -gx LS_COLORS "di=01;38;2;77;166;255:ln=01;38;2;95;220;220:so=01;35:do=01;35:ex=01;32:bd=01;33:cd=01;33:or=00;31:mi=00;31:*.tar=01;31:*.tgz=01;31:*.zip=01;31:*.jpg=00;35:*.jpeg=00;35:*.png=00;35:*.svg=00;35"
+
 # URL-encode a path keeping `/` intact so it stays valid inside file://.
 function __rex_urlencode_path
     set -l parts (string split '/' -- $argv[1])
@@ -62,19 +66,12 @@ end
 function __rex_install_prompt
     # ponytail: cover Conda's named wrapper; generalize if another prompt
     # framework preserves Rex indirectly.
-    if not set -q REX_BLOCKS
-        and functions -q __fish_prompt_orig
+    if functions -q __fish_prompt_orig
         and functions fish_prompt | string match -q '*__fish_prompt_orig*'
         and functions __fish_prompt_orig | string match -q '*__rex_user_prompt*'
         return
     end
     __rex_capture_user_prompt
-    if set -q REX_BLOCKS
-        function fish_right_prompt
-        end
-        function fish_greeting
-        end
-    end
     function fish_prompt
         set -l __rex_status $status
         printf '\e]133;D;%d\e\\' $__rex_status
@@ -98,17 +95,6 @@ function __rex_install_prompt
             end
         end
         printf '\e]133;A\e\\'
-        # Block mode: host renders its own input bar, so suppress the shell prompt
-        # (B marker only) and reserve header/gap rows, mirroring zsh.
-        if set -q REX_BLOCKS
-            if set -q __rex_block_seen
-                printf '\n\n'
-            else
-                printf '\n'
-            end
-            printf '\e]133;B\e\\'
-            return
-        end
         __rex_restore_status $__rex_status
         if functions -q __rex_user_prompt
             __rex_user_prompt
@@ -121,7 +107,6 @@ end
 __rex_install_prompt
 
 function __rex_preexec --on-event fish_preexec
-    set -g __rex_block_seen 1
     set -l cmd (string replace -ra '[\x00-\x1f\x7f]' ' ' -- "$argv")
     printf '\e]133;C;%s\e\\' (string sub -l 256 -- "$cmd")
 end

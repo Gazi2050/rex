@@ -13,7 +13,7 @@ const BASHRC = fileURLToPath(
 );
 
 it.skipIf(process.platform === "win32")(
-  "keeps Bash usable with and without PS0 integration",
+  "keeps Bash prompt input live even if the legacy blocks variable is set",
   () => {
     const script = BASHRC;
     const result = spawnSync(
@@ -29,10 +29,11 @@ PS1='test> '
 . "$1" >/dev/null
 if (( BASH_VERSINFO[0] > 4 || BASH_VERSINFO[0] == 4 && BASH_VERSINFO[1] >= 4 )); then
   test "$REX_BLOCKS" = 1 || exit 10
-  case "$PS0" in *'133;C'*) ;; *) exit 11 ;; esac
+  case "$PS1" in *'test> '*) ;; *) exit 11 ;; esac
+  case "$PS0" in *'133;C'*) ;; *) exit 12 ;; esac
 else
-  test -z "$REX_BLOCKS" || exit 12
-  case "$PS1" in *'rex_blocks=0'*'test> '*) ;; *) exit 13 ;; esac
+  test "$REX_BLOCKS" = 1 || exit 13
+  case "$PS1" in *'test> '*) ;; *) exit 14 ;; esac
 fi
 `,
         "rex-test",

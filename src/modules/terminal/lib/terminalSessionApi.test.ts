@@ -1,8 +1,4 @@
 import * as ghosttySession from "@/modules/terminal/ghostty/useGhosttyTerminalSession";
-import {
-  ensureGhosttyBlocks,
-  ghosttyBlocks,
-} from "@/modules/terminal/ghostty/ghosttyBlockSessions";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   clearFocusedTerminal,
@@ -74,12 +70,6 @@ describe("terminalSessionApi", () => {
     await whenSessionReady(10);
 
     expect(ghosttySession.whenGhosttySessionReady).toHaveBeenCalledWith(10);
-  });
-
-  it("releases precreated block state when a leaf closes before initialization", () => {
-    ensureGhosttyBlocks(12).draft = "pending input";
-    disposeSession(12);
-    expect(ghosttyBlocks(12)).toBeUndefined();
   });
 
   it("handles a Ghostty session created after the readiness request", async () => {

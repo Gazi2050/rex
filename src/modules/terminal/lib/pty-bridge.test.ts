@@ -169,7 +169,7 @@ describe("PTY bridge over the multiplexed stream", () => {
   it("opens the stream before pty_open and no longer passes output channels", async () => {
     const { openPty } = await load();
     nativeInvoke();
-    await openPty(80, 24, { onData: vi.fn() }, "/work", true, "zsh", 9);
+    await openPty(80, 24, { onData: vi.fn() }, "/work", "zsh", 9);
     const commands = mocks.invoke.mock.calls.map(([command]) => command);
     expect(commands.indexOf("pty_stream_open")).toBeLessThan(
       commands.indexOf("pty_open"),
@@ -179,7 +179,6 @@ describe("PTY bridge over the multiplexed stream", () => {
       cols: 80,
       rows: 24,
       cwd: "/work",
-      blocks: true,
       shell: "zsh",
       paneId: 9,
     });
@@ -283,7 +282,6 @@ describe("PTY bridge over the multiplexed stream", () => {
       24,
       { onData: vi.fn() },
       undefined,
-      false,
       undefined,
       31,
     );
