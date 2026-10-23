@@ -19,14 +19,14 @@ beforeEach(() => {
 
 describe("shortcutLabel", () => {
   it("formats the default binding when there is no user override", () => {
-    // commandPalette.open defaults to Ctrl+P.
-    expect(shortcutLabel("commandPalette.open")).toBe("Ctrl P");
+    // tab.new defaults to Ctrl+T.
+    expect(shortcutLabel("tab.new")).toBe("Ctrl T");
   });
 
   it("prefers a user override over the default binding", () => {
     prefsMock.shortcuts = {
-      "commandPalette.open": [{ ctrl: true, shift: true, key: "k" }],
+      "tab.new": [{ ctrl: true, shift: true, key: "k" }],
     };
-    expect(shortcutLabel("commandPalette.open")).toBe("Ctrl Shift K");
+    expect(shortcutLabel("tab.new")).toBe("Ctrl Shift K");
   });
 });

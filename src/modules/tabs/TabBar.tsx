@@ -5,21 +5,9 @@ import {
   ContextMenuSeparator,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { AgentIcon } from "@/modules/agents/lib/agentIcon";
-import {
-  ALL_LANGUAGES,
-  EXPOSED_LANGUAGES,
-} from "@/modules/editor/lib/languageDefinitions";
-import { resolveDisplayName } from "@/modules/editor/lib/languageResolver";
 import { FileIcon } from "@/modules/explorer/FileIcon";
 import {
   leafIds,
@@ -38,7 +26,6 @@ import {
   IncognitoIcon,
   Message02Icon,
   PencilEdit02Icon,
-  Tick02Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -58,7 +45,7 @@ import {
 } from "./lib/dragGap";
 import { selectTabAgentStatus } from "./lib/tabAgentStatus";
 import { labelFor } from "./lib/tabLabel";
-import type { EditorTab, Tab, TerminalTab } from "./lib/useTabs";
+import type { Tab, TerminalTab } from "./lib/useTabs";
 import { NewTabMenu } from "./NewTabMenu";
 
 type Props = {
@@ -79,7 +66,6 @@ type Props = {
   onRename: (id: number, title: string) => void;
   /** Move a dragged tab to a new position (insertion gap index 0..tabs.length). */
   onReorder: (fromId: number, toGapIndex: number) => void;
-  onOverrideLanguage?: (id: number, lang: string | null) => void;
   compact?: boolean;
 };
 
@@ -159,14 +145,12 @@ export function TabBar({
   onPin,
   onRename,
   onReorder,
-  onOverrideLanguage,
   compact,
 }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [draggingId, setDraggingId] = useState<number | null>(null);
-  const [showAllLanguages, setShowAllLanguages] = useState(false);
   // A drag reorders a local copy of the strip (`order`) and only commits the
   // real reorder on drop: no React work per crossing, so the terminal and the
   // rest of the app never re-render mid-drag.
@@ -501,7 +485,7 @@ export function TabBar({
                     }
                   }}
                   className={cn(
-                    "group relative z-[1] h-7 shrink-0 justify-between gap-1.5 rounded-md bg-transparent text-xs transition-colors data-active:bg-transparent dark:data-active:bg-transparent",
+                    "group relative z-[1] flex-none h-7 shrink-0 justify-between gap-1.5 rounded-md bg-transparent text-xs transition-colors data-active:bg-transparent dark:data-active:bg-transparent",
                     isNew && "rex-tab-in",
                     isActive
                       ? "text-foreground dark:text-foreground"
@@ -515,115 +499,11 @@ export function TabBar({
                         : "ps-2! pe-1!",
                   )}
                 >
-                  <span
-                    className={cn(
-                      "flex min-w-0 items-center gap-1.5",
-                      compact ? "max-w-48" : "max-w-120",
-                    )}
-                  >
-                    {t.kind === "editor" ? (
-                      <DropdownMenu
-                        onOpenChange={(open) => {
-                          if (!open) setShowAllLanguages(false);
-                        }}
-                      >
-                        <DropdownMenuTrigger asChild>
-                          {/* span, not button: a button nested in the TabsTrigger button is invalid DOM and breaks WebKit focus. */}
-                          <span
-                            role="button"
-                            tabIndex={-1}
-                            data-no-drag
-                            onPointerDown={(e) => e.stopPropagation()}
-                            onMouseDown={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                            }}
-                            className="inline-flex shrink-0 cursor-pointer items-center justify-center rounded-sm p-1 -m-1 transition-all hover:bg-accent hover:text-accent-foreground hover:ring-1 hover:ring-primary/30 hover:shadow-[0_0_4px_var(--color-popover-foreground)]"
-                          >
-                            <TabIcon tab={t} />
-                          </span>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent
-                          align="start"
-                          side="bottom"
-                          sideOffset={6}
-                          alignOffset={-4}
-                          className="max-h-75 w-48 overflow-y-auto rounded-xl border border-border/40 bg-popover p-1 shadow-lg"
-                          onClick={(e) => e.stopPropagation()}
-                          onPointerDown={(e) => e.stopPropagation()}
-                          onPointerUp={(e) => e.stopPropagation()}
-                        >
-                          <DropdownMenuItem
-                            onSelect={() => {
-                              onOverrideLanguage?.(t.id, null);
-                            }}
-                            className="flex items-center gap-2 px-2.5 py-1.5 text-xs rounded-lg cursor-default focus:bg-accent focus:text-accent-foreground"
-                          >
-                            <FileIcon
-                              name={t.title}
-                              className="size-3.5 shrink-0 object-contain"
-                            />
-                            <div className="flex flex-1 flex-col">
-                              <span>Auto Detect</span>
-                              <span className="text-[10px] text-muted-foreground italic">
-                                Mode: {resolveDisplayName(t.title)}
-                              </span>
-                            </div>
-                            {!(t as EditorTab).overrideLanguage && (
-                              <HugeiconsIcon
-                                icon={Tick02Icon}
-                                className="size-3.5 text-primary"
-                              />
-                            )}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onSelect={(e) => {
-                              e.preventDefault();
-                              setShowAllLanguages((v) => !v);
-                            }}
-                            className="w-full px-2.5 py-1.5 text-left text-xs text-primary/60 hover:text-primary rounded-lg transition-colors hover:bg-accent"
-                          >
-                            {showAllLanguages
-                              ? "↑ Fewer languages"
-                              : "↓ All languages"}
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator className="my-1 border-t border-border/30" />
-                          {(showAllLanguages
-                            ? ALL_LANGUAGES
-                            : EXPOSED_LANGUAGES
-                          ).map((lang) => {
-                            const isSelected =
-                              (t as EditorTab).overrideLanguage === lang.ext;
-                            return (
-                              <DropdownMenuItem
-                                key={lang.ext}
-                                onSelect={() =>
-                                  onOverrideLanguage?.(t.id, lang.ext)
-                                }
-                                className="flex items-center gap-2 px-2.5 py-1.5 text-xs rounded-lg cursor-default focus:bg-accent focus:text-accent-foreground"
-                              >
-                                <FileIcon
-                                  name={`dummy.${lang.ext}`}
-                                  className="size-3.5 shrink-0 object-contain"
-                                />
-                                <span className="flex-1">{lang.name}</span>
-                                {isSelected && (
-                                  <HugeiconsIcon
-                                    icon={Tick02Icon}
-                                    className="size-3.5 text-primary"
-                                  />
-                                )}
-                              </DropdownMenuItem>
-                            );
-                          })}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    ) : (
-                      <TabIcon tab={t} />
-                    )}
+                  <span className="flex min-w-0 items-center gap-1.5">
+                    <TabIcon tab={t} />
                     {/* Preview tabs use italic to signal the transient state,
                         matching the visual convention from VSCode. */}
-                    <span className={cn("truncate", isPreview && "italic")}>
+                    <span className={cn(isPreview && "italic")}>
                       {labelFor(t)}
                     </span>
                     {t.kind === "editor" && t.dirty ? (
@@ -805,13 +685,7 @@ function TerminalTabIcon({ tab }: { tab: TerminalTab }) {
 export function TabIcon({ tab }: { tab: Tab }) {
   if (tab.kind === "editor" || tab.kind === "markdown") {
     return (
-      <FileIcon
-        name={
-          tab.kind === "editor" && tab.overrideLanguage
-            ? `dummy.${tab.overrideLanguage}`
-            : tab.title
-        }
-        className="size-3.5 shrink-0 object-contain"
+      <FileIcon name={tab.title} className="size-3.5 shrink-0 object-contain"
       />
     );
   }
@@ -819,16 +693,6 @@ export function TabIcon({ tab }: { tab: Tab }) {
     return (
       <HugeiconsIcon
         icon={Globe02Icon}
-        size={14}
-        strokeWidth={2}
-        className="shrink-0"
-      />
-    );
-  }
-  if (tab.kind === "ai-diff") {
-    return (
-      <HugeiconsIcon
-        icon={GitCompareIcon}
         size={14}
         strokeWidth={2}
         className="shrink-0"

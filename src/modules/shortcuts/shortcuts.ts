@@ -5,8 +5,6 @@ import { IS_MAC, MOD_PROP } from "@/lib/platform";
  */
 
 export type ShortcutId =
-  | "commandPalette.open"
-  | "commandPalette.content"
   | "tab.new"
   | "tab.newPrivate"
   | "tab.newPreview"
@@ -36,17 +34,11 @@ export type ShortcutId =
   | "view.zoomOut"
   | "view.zoomReset"
   | "view.zenMode"
-  | "ai.toggle"
-  | "ai.toggleMini"
-  | "ai.askSelection"
-  | "agent.focusAttention"
   | "settings.open"
   | "sidebar.toggle"
   | "editor.undo"
   | "editor.redo"
-  | "editor.save"
-  | "editor.aiComplete"
-  | "editor.codeComplete";
+  | "editor.save";
 
 export type ShortcutGroup =
   | "General"
@@ -55,7 +47,6 @@ export type ShortcutGroup =
   | "Panes"
   | "Terminal"
   | "Search"
-  | "AI"
   | "View"
   | "Editor";
 
@@ -76,18 +67,6 @@ export type Shortcut = {
 };
 
 export const SHORTCUTS: Shortcut[] = [
-  {
-    id: "commandPalette.open",
-    label: "Open command palette",
-    group: "General",
-    defaultBindings: [{ [MOD_PROP]: true, key: "p" }],
-  },
-  {
-    id: "commandPalette.content",
-    label: "Find in files",
-    group: "General",
-    defaultBindings: [{ [MOD_PROP]: true, shift: true, key: "p" }],
-  },
   {
     id: "settings.open",
     label: "Open settings",
@@ -239,32 +218,6 @@ export const SHORTCUTS: Shortcut[] = [
     defaultBindings: [{ [MOD_PROP]: true, key: "f" }],
   },
   {
-    id: "ai.toggle",
-    label: "Toggle AI agent",
-    group: "AI",
-    defaultBindings: [{ [MOD_PROP]: true, key: "i" }],
-  },
-  {
-    id: "ai.toggleMini",
-    label: "Toggle AI chat window",
-    group: "AI",
-    defaultBindings: [{ [MOD_PROP]: true, shift: true, key: "i" }],
-  },
-  {
-    id: "ai.askSelection",
-    label: "Ask AI about selection",
-    group: "AI",
-    // Keep Mod+L available to the shell for clear-screen, including when
-    // terminal text is selected and this shortcut is otherwise eligible.
-    defaultBindings: [{ [MOD_PROP]: true, key: "j" }],
-  },
-  {
-    id: "agent.focusAttention",
-    label: "Jump to agent needing attention",
-    group: "AI",
-    defaultBindings: [{ [MOD_PROP]: true, shift: true, key: "a" }],
-  },
-  {
     id: "sidebar.toggle",
     label: "Toggle file explorer",
     group: "View",
@@ -348,18 +301,6 @@ export const SHORTCUTS: Shortcut[] = [
     group: "Editor",
     defaultBindings: [{ [MOD_PROP]: true, key: "s" }],
   },
-  {
-    id: "editor.aiComplete",
-    label: "Trigger AI completion",
-    group: "Editor",
-    defaultBindings: [{ alt: true, key: "\\" }],
-  },
-  {
-    id: "editor.codeComplete",
-    label: "Trigger code completion",
-    group: "Editor",
-    defaultBindings: [{ ctrl: true, key: " " }],
-  },
 ];
 
 export const SHORTCUT_GROUPS: ShortcutGroup[] = [
@@ -369,7 +310,6 @@ export const SHORTCUT_GROUPS: ShortcutGroup[] = [
   "Terminal",
   "View",
   "Search",
-  "AI",
   "Editor",
 ];
 

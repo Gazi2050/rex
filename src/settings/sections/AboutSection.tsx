@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { useUpdater } from "@/modules/updater";
-import { GithubIcon, Globe02Icon } from "@hugeicons/core-free-icons";
+import { UPDATES_ENABLED, useUpdater } from "@/modules/updater";
+import { GithubIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { getName, getVersion } from "@tauri-apps/api/app";
 import { openUrl } from "@tauri-apps/plugin-opener";
@@ -8,8 +8,7 @@ import { arch, platform } from "@tauri-apps/plugin-os";
 import { useEffect, useState } from "react";
 import { SectionHeader } from "../components/SectionHeader";
 
-const REPO_URL = "https://github.com/crynta/terax-ai";
-const WEBSITE = "https://terax.app";
+const REPO_URL = "https://github.com/Gazi2050/rex";
 
 const PLATFORM_LABEL: Record<string, string> = {
   macos: "macOS",
@@ -103,31 +102,24 @@ export function AboutSection() {
             className="inline-flex items-center gap-1.5 rounded-md text-[12px] underline-offset-2 hover:text-foreground hover:underline"
           >
             <HugeiconsIcon icon={GithubIcon} size={12} strokeWidth={1.75} />
-            crynta/terax-ai
+            Gazi2050/rex
           </button>
         </dd>
         <dt className="text-muted-foreground">Website</dt>
-        <dd>
-          <button
-            type="button"
-            onClick={() => void openUrl(WEBSITE)}
-            className="inline-flex items-center gap-1.5 rounded-md text-[12px] underline-offset-2 hover:text-foreground hover:underline"
-          >
-            <HugeiconsIcon icon={Globe02Icon} size={12} strokeWidth={1.75} />
-            rex.app
-          </button>
-        </dd>
+        <dd className="text-muted-foreground">Coming soon</dd>
       </dl>
 
       <div className="flex flex-col gap-1.5">
         <div className="flex gap-2">
-          <Button
-            size="sm"
-            onClick={onUpdateClick}
-            disabled={checking || downloading || ready}
-          >
-            {checkLabel}
-          </Button>
+          {UPDATES_ENABLED && (
+            <Button
+              size="sm"
+              onClick={onUpdateClick}
+              disabled={checking || downloading || ready}
+            >
+              {checkLabel}
+            </Button>
+          )}
           <Button
             variant="outline"
             size="sm"
@@ -145,12 +137,12 @@ export function AboutSection() {
             Report an issue
           </Button>
         </div>
-        {status.kind === "error" && (
+        {UPDATES_ENABLED && status.kind === "error" && (
           <p className="font-mono text-[10.5px] break-all text-destructive/80">
             {status.message}
           </p>
         )}
-        {downloading && status.contentLength ? (
+        {UPDATES_ENABLED && downloading && status.contentLength ? (
           <p className="text-[11px] text-muted-foreground">
             {Math.min(
               100,

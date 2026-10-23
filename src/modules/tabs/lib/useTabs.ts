@@ -61,7 +61,6 @@ export type EditorTab = TabBase & {
    * is replaced by the next single-click rather than accumulating.
    */
   preview: boolean;
-  overrideLanguage?: string | null;
 };
 
 export type PreviewTab = TabBase & {
@@ -76,22 +75,6 @@ export type MarkdownTab = TabBase & {
   kind: "markdown";
   title: string;
   path: string;
-};
-
-export type AiDiffStatus = "pending" | "approved" | "rejected";
-
-export type AiDiffTab = TabBase & {
-  id: number;
-  kind: "ai-diff";
-  title: string;
-  path: string;
-  /** "" for newly created files. */
-  originalContent: string;
-  proposedContent: string;
-  /** Tool-call approval id used to resolve the AI SDK approval. */
-  approvalId: string;
-  status: AiDiffStatus;
-  isNewFile: boolean;
 };
 
 export type GitDiffTab = TabBase & {
@@ -129,7 +112,6 @@ export type Tab =
   | EditorTab
   | PreviewTab
   | MarkdownTab
-  | AiDiffTab
   | GitDiffTab
   | GitHistoryTab
   | GitCommitFileDiffTab;
@@ -142,7 +124,6 @@ export type TabPatch = Partial<{
   url: string;
   /** Empty string resets a terminal tab to its cwd-derived name. */
   customTitle: string;
-  overrideLanguage: string | null;
 }>;
 
 export type GitDiffOpenInput = {
@@ -855,81 +836,6 @@ export function useTabs(initial?: Partial<TerminalTab>) {
     );
   }, []);
 
-  const openAiDiffTab = useCallback(
-    (input: {
-      path: string;
-      originalContent: string;
-      proposedContent: string;
-      approvalId: string;
-      isNewFile: boolean;
-    }) => {
-      let targetId: number | null = null;
-      setTabs((curr) => {
-        const existing = curr.find(
-          (t) => t.kind === "ai-diff" && t.approvalId === input.approvalId,
-        );
-        if (existing) {
-          targetId = existing.id;
-          return curr;
-        }
-        const id = nextIdRef.current++;
-        targetId = id;
-        const title = `${basename(input.path)} (AI diff)`;
-        return [
-          ...curr,
-          {
-            id,
-            kind: "ai-diff",
-            spaceId: activeSpaceIdRef.current,
-            title,
-            path: input.path,
-            originalContent: input.originalContent,
-            proposedContent: input.proposedContent,
-            approvalId: input.approvalId,
-            status: "pending",
-            isNewFile: input.isNewFile,
-          },
-        ];
-      });
-      if (targetId !== null) setActiveId(targetId);
-      return targetId as number | null;
-    },
-    [],
-  );
-
-  const setAiDiffStatus = useCallback(
-    (approvalId: string, status: AiDiffStatus) => {
-      setTabs((curr) =>
-        curr.map((t) =>
-          t.kind === "ai-diff" && t.approvalId === approvalId
-            ? { ...t, status }
-            : t,
-        ),
-      );
-    },
-    [],
-  );
-
-  const closeAiDiffTab = useCallback((approvalId: string) => {
-    setTabs((curr) => {
-      const target = curr.find(
-        (t) => t.kind === "ai-diff" && t.approvalId === approvalId,
-      );
-      if (!target) return curr;
-      const fallback = nextActiveInSpace(curr, target.id);
-      if (fallback === null) {
-        return curr.map((t) =>
-          t.kind === "ai-diff" && t.approvalId === approvalId
-            ? { ...t, status: "approved" as AiDiffStatus }
-            : t,
-        );
-      }
-      const next = curr.filter((t) => t.id !== target.id);
-      setActiveId((active) => (target.id === active ? fallback : active));
-      return next;
-    });
-  }, []);
-
   const newPreviewTab = useCallback((url: string) => {
     const id = nextIdRef.current++;
     setTabs((t) => [
@@ -966,18 +872,6 @@ export function useTabs(initial?: Partial<TerminalTab>) {
     return plan.tabId;
   }, []);
 
-  const setOverrideLanguage = useCallback((id: number, lang: string | null) => {
-    setTabs((curr) =>
-      curr.map((t) => {
-        if (t.id !== id || t.kind !== "editor") return t;
-        return {
-          ...t,
-          overrideLanguage: lang,
-        };
-      }),
-    );
-  }, []);
-
   const setMarkdownView = useCallback(
     (id: number, mode: "rendered" | "raw") => {
       setTabs((curr) =>
@@ -993,9 +887,6 @@ export function useTabs(initial?: Partial<TerminalTab>) {
               kind: "editor" as const,
               dirty: false,
               preview: false,
-              overrideLanguage:
-                (t as { overrideLanguage?: string | null }).overrideLanguage ??
-                null,
             };
           }
           if (mode === "rendered" && t.kind === "editor") {
@@ -1007,7 +898,6 @@ export function useTabs(initial?: Partial<TerminalTab>) {
               cold: t.cold,
               title: t.title,
               path: t.path,
-              overrideLanguage: t.overrideLanguage ?? null,
             };
           }
           return t;
@@ -1184,9 +1074,6 @@ export function useTabs(initial?: Partial<TerminalTab>) {
           ...(patch.title !== undefined && { title: patch.title }),
           ...(patch.dirty !== undefined && { dirty: patch.dirty }),
           ...(patch.path !== undefined && { path: patch.path }),
-          ...(patch.overrideLanguage !== undefined && {
-            overrideLanguage: patch.overrideLanguage,
-          }),
         };
       }),
     );
@@ -1399,7 +1286,6 @@ export function useTabs(initial?: Partial<TerminalTab>) {
     removeTabsForSpace,
     markBooted,
     setActiveSpaceForNewTabs,
-    setOverrideLanguage,
     newTab,
     newAgentTab,
     newAgentGroupTab,
@@ -1409,12 +1295,9 @@ export function useTabs(initial?: Partial<TerminalTab>) {
     newPreviewTab,
     newMarkdownTab,
     setMarkdownView,
-    openAiDiffTab,
     openGitDiffTab,
     openCommitHistoryTab,
     openCommitFileDiffTab,
-    setAiDiffStatus,
-    closeAiDiffTab,
     closeTab,
     closeTabs,
     updateTab,

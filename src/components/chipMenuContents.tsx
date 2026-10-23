@@ -2,7 +2,7 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
-import type { GitBranchEntry } from "@/modules/ai/lib/native";
+import type { GitBranchEntry } from "@/modules/native";
 import { CheckmarkCircle02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 

@@ -1,4 +1,4 @@
-import { type FileStat, native } from "@/modules/ai/lib/native";
+import { type FileStat, native } from "@/modules/native";
 import { homeDir } from "@tauri-apps/api/path";
 
 let cachedHome: string | null = null;

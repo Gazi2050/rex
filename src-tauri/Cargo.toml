@@ -58,7 +58,6 @@ tauri-plugin-log = "2"
 tauri-plugin-os = "2"
 tauri-plugin-store = "2"
 tauri-plugin-process = "2"
-tauri-plugin-notification = "2"
 # One reqwest for the whole app: tauri-plugin-updater already pulls 0.13 with
 # the platform verifier. `rustls-no-provider` + the explicit ring provider below
 # keep it to a single TLS stack and no aws-lc.

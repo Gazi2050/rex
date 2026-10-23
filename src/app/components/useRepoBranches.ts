@@ -1,4 +1,4 @@
-import { type GitBranchEntry, native } from "@/modules/ai/lib/native";
+import { type GitBranchEntry, native } from "@/modules/native";
 import { useEffect, useState } from "react";
 
 export type RepoBranches = {

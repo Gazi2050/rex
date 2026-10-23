@@ -197,13 +197,7 @@ describe("built startup graph", () => {
         ...analyzeDist(outDir, [html])[html].trace.files.keys(),
       ]),
     );
-    for (const stem of [
-      "ai-sdk-shared",
-      "ai-anthropic",
-      "streamdown",
-      "codemirror",
-      "iconEngine",
-    ]) {
+    for (const stem of ["codemirror", "iconEngine"]) {
       const file = chunks.find((f) => chunkName(f) === stem);
       expect(file, `${stem} chunk should be emitted`).toBeDefined();
       expect(startup.has(`assets/${file}`), `${stem} must not be startup`).toBe(

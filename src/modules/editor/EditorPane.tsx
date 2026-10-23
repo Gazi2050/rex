@@ -1,9 +1,6 @@
-import { endpointIdFromCompatModel } from "@/modules/ai/config";
-import { getCustomEndpointKey, getKey } from "@/modules/ai/lib/keyring";
 import { lspFormatDocument, useLspExtension } from "@/modules/lsp";
+import { Prec } from "@codemirror/state";
 import { usePreferencesStore } from "@/modules/settings/preferences";
-import { onKeysChanged } from "@/modules/settings/store";
-import { acceptCompletion, startCompletion } from "@codemirror/autocomplete";
 import { redo, undo } from "@codemirror/commands";
 import {
   findNext,
@@ -13,7 +10,6 @@ import {
   SearchQuery,
   setSearchQuery,
 } from "@codemirror/search";
-import { Prec } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
 import { vim } from "@replit/codemirror-vim";
 import { convertFileSrc } from "@tauri-apps/api/core";
@@ -30,10 +26,6 @@ import {
   useState,
 } from "react";
 import { toast } from "sonner";
-import {
-  inlineCompletion,
-  triggerInlineCompletion,
-} from "./lib/autocomplete/inlineExtension";
 import { diagnosticsReporter } from "./lib/diagnosticsReporter";
 import { useDiagnosticsStore } from "./lib/diagnosticsStore";
 import {
@@ -80,15 +72,10 @@ export type EditorPaneHandle = {
   redo: () => void;
   /** Persist the buffer (format-on-save + write), same as Mod+S / :w. */
   save: () => Promise<void>;
-  /** Request an AI ghost suggestion at the cursor. */
-  triggerAiComplete: () => void;
-  /** Open CodeMirror's completion popup. */
-  triggerCodeComplete: () => void;
 };
 
 type Props = {
   path: string;
-  overrideLanguage?: string | null;
   onDirtyChange?: (dirty: boolean) => void;
   onSaved?: () => void;
   onClose?: () => void;
@@ -108,7 +95,7 @@ function formatBytes(n: number): string {
 // skip re-rendering entirely when App re-renders (terminal events, tab churn).
 export const EditorPane = memo(
   forwardRef<EditorPaneHandle, Props>(function EditorPane(props, ref) {
-    const { path, overrideLanguage, onDirtyChange, onSaved, onClose } = props;
+    const { path, onDirtyChange, onSaved, onClose } = props;
 
     const { doc, onChange, save, reload, adoptDiskText, openAnyway } =
       useDocument({
@@ -127,51 +114,6 @@ export const EditorPane = memo(
     );
     const languageRef = useRef<string | null>(null);
     const [langId, setLangId] = useState<string | null>(null);
-    const apiKeyRef = useRef<string | null>(null);
-
-    useEffect(() => {
-      let cancelled = false;
-      const refresh = async () => {
-        const s = usePreferencesStore.getState();
-        const provider = s.autocompleteProvider;
-        if (
-          provider === "lmstudio" ||
-          provider === "mlx" ||
-          provider === "ollama"
-        ) {
-          apiKeyRef.current = null;
-          return;
-        }
-        // OpenAI-compatible keys live in a per-endpoint keyring slot.
-        if (provider === "openai-compatible") {
-          const eid = endpointIdFromCompatModel(s.autocompleteModelId);
-          const k = eid ? await getCustomEndpointKey(eid) : null;
-          if (!cancelled) apiKeyRef.current = k;
-          return;
-        }
-        const k = await getKey(provider);
-        if (!cancelled) apiKeyRef.current = k;
-      };
-      void refresh();
-      let unlistenKeys: (() => void) | undefined;
-      void onKeysChanged(() => void refresh()).then((un) => {
-        if (cancelled) un();
-        else unlistenKeys = un;
-      });
-      const unsubPrefs = usePreferencesStore.subscribe((state, prev) => {
-        if (
-          state.autocompleteProvider !== prev.autocompleteProvider ||
-          state.autocompleteModelId !== prev.autocompleteModelId
-        ) {
-          void refresh();
-        }
-      });
-      return () => {
-        cancelled = true;
-        unlistenKeys?.();
-        unsubPrefs();
-      };
-    }, []);
     // Stabilize save + onSaved via refs so the extensions array never changes
     // identity — a new identity makes @uiw/react-codemirror reconfigure the
     // whole state, wiping the language compartment.
@@ -334,48 +276,6 @@ export const EditorPane = memo(
         languageCompartment.of([]),
         lspCompartment.of([]),
         diagnosticsReporter(() => pathRef.current),
-        // Before inlineCompletion so an open popup wins Tab over the ghost.
-        Prec.highest(keymap.of([{ key: "Tab", run: acceptCompletion }])),
-        inlineCompletion({
-          getPrefs: () => {
-            const s = usePreferencesStore.getState();
-            const p = s.autocompleteProvider;
-            // autocompleteModelId holds the compat- id of the chosen endpoint.
-            const compatEp =
-              p === "openai-compatible"
-                ? s.customEndpoints.find(
-                    (e) =>
-                      e.id === endpointIdFromCompatModel(s.autocompleteModelId),
-                  )
-                : undefined;
-            const modelId =
-              p === "lmstudio"
-                ? s.lmstudioModelId
-                : p === "mlx"
-                  ? s.mlxModelId
-                  : p === "ollama"
-                    ? s.ollamaModelId
-                    : p === "openai-compatible"
-                      ? (compatEp?.modelId ?? "")
-                      : p === "openrouter"
-                        ? s.openrouterModelId
-                        : s.autocompleteModelId;
-            return {
-              enabled: s.autocompleteEnabled,
-              trigger: s.autocompleteTrigger,
-              provider: p,
-              modelId,
-              apiKey: apiKeyRef.current,
-              lmstudioBaseURL: s.lmstudioBaseURL,
-              mlxBaseURL: s.mlxBaseURL,
-              ollamaBaseURL: s.ollamaBaseURL,
-              openaiCompatibleBaseURL:
-                compatEp?.baseURL ?? s.openaiCompatibleBaseURL,
-            };
-          },
-          getPath: () => pathRef.current,
-          getLanguage: () => languageRef.current,
-        }),
         keymap.of([
           {
             key: "Mod-s",
@@ -436,13 +336,11 @@ export const EditorPane = memo(
     // Warm the language chunk while the file is still being read; the
     // ready-gated effect below then resolves from cache.
     useEffect(() => {
-      const resolvePath = overrideLanguage ? `dummy.${overrideLanguage}` : path;
-      void resolveLanguage(resolvePath).catch(() => {});
-    }, [path, overrideLanguage]);
+      void resolveLanguage(path).catch(() => {});
+    }, [path]);
 
     useEffect(() => {
-      const ext =
-        overrideLanguage || (path.split(".").pop()?.toLowerCase() ?? null);
+      const ext = path.split(".").pop()?.toLowerCase() ?? null;
       languageRef.current = ext;
       if (doc.status !== "ready") return;
       if (doc.size > SYNTAX_MAX_BYTES) {
@@ -453,11 +351,8 @@ export const EditorPane = memo(
       }
       let cancelled = false;
       const resolve = async (): Promise<LanguageResult> => {
-        const resolvePath = overrideLanguage
-          ? `dummy.${overrideLanguage}`
-          : path;
         return (
-          (await resolveLanguage(resolvePath)) ?? { ext: [], name: "", id: "" }
+          (await resolveLanguage(path)) ?? { ext: [], name: "", id: "" }
         );
       };
       void resolve().then((result) => {
@@ -473,7 +368,7 @@ export const EditorPane = memo(
       return () => {
         cancelled = true;
       };
-    }, [path, doc.status, overrideLanguage]);
+    }, [path, doc.status]);
 
     useImperativeHandle(
       ref,
@@ -537,16 +432,6 @@ export const EditorPane = memo(
           if (view) redo(view);
         },
         save: () => performSaveRef.current(),
-        triggerAiComplete: () => {
-          const view = cmRef.current?.view;
-          if (view) triggerInlineCompletion(view);
-        },
-        triggerCodeComplete: () => {
-          const view = cmRef.current?.view;
-          if (!view) return;
-          view.focus();
-          startCompletion(view);
-        },
       }),
       [path, applyPendingFocus, applyPendingGoto],
     );

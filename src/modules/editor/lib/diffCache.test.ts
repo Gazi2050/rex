@@ -5,7 +5,7 @@ const nativeMock = vi.hoisted(() => ({
   gitCommitFileDiff: vi.fn(),
 }));
 
-vi.mock("@/modules/ai/lib/native", () => ({ native: nativeMock }));
+vi.mock("@/modules/native", () => ({ native: nativeMock }));
 
 const workspaceMock = vi.hoisted(() => ({
   currentWorkspaceScopeKey: vi.fn(() => "scope"),
@@ -13,7 +13,7 @@ const workspaceMock = vi.hoisted(() => ({
 
 vi.mock("@/modules/workspace", () => workspaceMock);
 
-import type { GitDiffContentResult } from "@/modules/ai/lib/native";
+import type { GitDiffContentResult } from "@/modules/native";
 
 function result(modifiedContent: string): GitDiffContentResult {
   return {

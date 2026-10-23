@@ -1,4 +1,4 @@
-import { native } from "@/modules/ai/lib/native";
+import { native } from "@/modules/native";
 import { usePreferencesStore } from "@/modules/settings/preferences";
 import type { Tab } from "@/modules/tabs";
 import { DEFAULT_SPACE_ID } from "@/modules/tabs/lib/useTabs";
@@ -52,15 +52,14 @@ export function useSpacesBoot({
 
     void (async () => {
       try {
+        // Hydrate prefs before anything reads them — zoom, shortcuts, terminal
+        // settings, and the saved workspace env below all need real values,
+        // not defaults. Idempotent + memoized in the store.
+        await usePreferencesStore.getState().init().catch(() => {});
         const { spaces, activeId, states } = await loadAll();
 
         if (spaces.length === 0) {
           const root = launchCwd ?? home ?? null;
-          // Hydrate prefs before reading the saved workspace env.
-          await usePreferencesStore
-            .getState()
-            .init()
-            .catch(() => {});
           const meta: SpaceMeta = {
             id: DEFAULT_SPACE_ID,
             name: "Default",

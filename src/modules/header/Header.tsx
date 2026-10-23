@@ -1,11 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { WindowControls } from "@/components/WindowControls";
 import { IS_MAC, USE_CUSTOM_WINDOW_CONTROLS } from "@/lib/platform";
-import { NotificationBell } from "@/modules/agents";
 import type { Tab } from "@/modules/tabs";
 import { TabBar } from "@/modules/tabs";
 import {
-  CommandIcon,
   Settings01Icon,
   SidebarLeftIcon,
 } from "@hugeicons/core-free-icons";
@@ -41,11 +39,7 @@ type Props = {
   onRename: (id: number, title: string) => void;
   /** Move a dragged tab to a new position (insertion gap index). */
   onReorder: (fromId: number, toGapIndex: number) => void;
-  onOverrideLanguage?: (id: number, lang: string | null) => void;
   onToggleSidebar: () => void;
-  onOpenCommandPalette: () => void;
-  onActivateAgent: (tabId: number, leafId: number) => void;
-  onActivateLocalAgent: () => void;
   onOpenSettings: () => void;
   spaceSwitcher: ReactNode;
   searchTarget: SearchTarget;
@@ -67,11 +61,7 @@ export function Header({
   onPin,
   onRename,
   onReorder,
-  onOverrideLanguage,
   onToggleSidebar,
-  onOpenCommandPalette,
-  onActivateAgent,
-  onActivateLocalAgent,
   onOpenSettings,
   spaceSwitcher,
   searchTarget,
@@ -121,23 +111,6 @@ export function Header({
         >
           <HugeiconsIcon icon={SidebarLeftIcon} size={18} strokeWidth={1.75} />
         </Button>
-
-        <Button
-          size="icon-sm"
-          variant="ghost"
-          onClick={onOpenCommandPalette}
-          title="Command palette"
-          className="shrink-0 gap-1.5 rounded-md px-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
-        >
-          <HugeiconsIcon icon={CommandIcon} size={14} strokeWidth={1.75} />
-        </Button>
-
-        {!IS_MAC && (
-          <NotificationBell
-            onActivate={onActivateAgent}
-            onActivateLocal={onActivateLocalAgent}
-          />
-        )}
       </div>
 
       {!IS_MAC && (
@@ -172,7 +145,6 @@ export function Header({
           onPin={onPin}
           onRename={onRename}
           onReorder={onReorder}
-          onOverrideLanguage={onOverrideLanguage}
           compact={compact}
         />
         <div data-tauri-drag-region className="h-full min-w-2 shrink-0" />
@@ -180,15 +152,7 @@ export function Header({
 
       <SearchInline ref={searchRef} target={searchTarget} compact={compact} />
 
-      {IS_MAC && (
-        <>
-          <NotificationBell
-            onActivate={onActivateAgent}
-            onActivateLocal={onActivateLocalAgent}
-          />
-          {settingsButton}
-        </>
-      )}
+      {IS_MAC && settingsButton}
 
       {!IS_MAC && settingsButton}
 

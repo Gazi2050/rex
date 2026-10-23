@@ -3,7 +3,7 @@ import {
   type NodeEnv,
   parseNodeProbe,
 } from "@/lib/nodeProbe";
-import { native } from "@/modules/ai/lib/native";
+import { native } from "@/modules/native";
 import { useEffect, useState } from "react";
 
 /** Node version + installed versions for the chip dropdown. Probed lazily in

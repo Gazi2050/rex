@@ -3,8 +3,10 @@ pub mod modules;
 #[cfg(target_os = "macos")]
 use modules::app_menu;
 use modules::{
-    agent, control, fs, git, history, lsp, net, pty, secrets, shell, vibrancy, workspace,
+    control, fs, git, history, lsp, pty, secrets, shell, vibrancy, workspace,
 };
+#[cfg(windows)]
+use modules::agent;
 use std::path::PathBuf;
 use std::sync::Mutex;
 use tauri::{Emitter, Manager, State, WebviewUrl, WebviewWindowBuilder};
@@ -210,7 +212,6 @@ pub fn run() {
         .plugin(tauri_plugin_autostart::Builder::new().build())
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_os::init())
-        .plugin(tauri_plugin_notification::init())
         .plugin(
             tauri_plugin_log::Builder::new()
                 .level(tauri_plugin_log::log::LevelFilter::Info)
@@ -221,9 +222,6 @@ pub fn run() {
         .register_asynchronous_uri_scheme_protocol("rex-pty", pty::stream_protocol)
         .on_page_load(|webview, payload| {
             if matches!(payload.event(), tauri::webview::PageLoadEvent::Started) {
-                if let Some(state) = webview.try_state::<net::AiStreamState>() {
-                    state.cancel_window(webview.window().label());
-                }
                 if let Some(state) = webview.try_state::<pty::PtyState>() {
                     state.reset_webview(webview.label());
                 }
@@ -252,8 +250,6 @@ pub fn run() {
             Ok(())
         })
         .manage(pty::PtyState::default())
-        .manage(net::AiStreamState::default())
-        .manage(modules::ai_sessions::SessionFilesState::default())
         .manage(modules::window_presentation::WindowPresentationState::default())
         .manage(control_state)
         .manage(shell::ShellState::default())
@@ -350,21 +346,10 @@ pub fn run() {
             get_launch_dir,
             get_launch_files,
             open_settings_window,
-            agent::agent_enable_hooks,
-            agent::agent_hooks_status,
             secrets::secrets_get,
             secrets::secrets_set,
             secrets::secrets_delete,
             secrets::secrets_get_all,
-            net::lm_ping,
-            net::ai_http_stream,
-            net::ai_http_cancel,
-            net::ai_http_ack,
-            modules::ai_sessions::ai_session_load,
-            modules::ai_sessions::ai_session_save,
-            modules::ai_sessions::ai_session_delete,
-            modules::ai_sessions::ai_session_finish_migration,
-            modules::ai_sessions::ai_session_prune_backup,
             history::history_suggest,
             history::history_commands,
             history::history_record,
@@ -388,9 +373,6 @@ pub fn run() {
                     event: tauri::WindowEvent::Destroyed,
                     ..
                 } => {
-                    if let Some(state) = app.try_state::<net::AiStreamState>() {
-                        state.cancel_window(&label);
-                    }
                     if let Some(state) = app.try_state::<pty::PtyState>() {
                         state.destroy_webview(&label);
                     }

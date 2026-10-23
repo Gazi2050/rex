@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/context-menu";
 import { IS_MAC } from "@/lib/platform";
 import { cn } from "@/lib/utils";
-import type { GitStatusSnapshot } from "@/modules/ai/lib/native";
+import type { GitStatusSnapshot } from "@/modules/native";
 import { usePreferencesStore } from "@/modules/settings/preferences";
 import { useGlobalShortcuts } from "@/modules/shortcuts";
 import type { TerminalPathDropTarget } from "@/modules/terminal";
@@ -80,7 +80,6 @@ type Props = {
   onRevealInTerminal?: (path: string) => void;
   onOpenInSourceControl?: (path: string) => void;
   onOpenGitHistory?: (path: string) => void;
-  onAttachToAgent?: (path: string) => void;
   pathDropTarget?: TerminalPathDropTarget;
   gitStatus?: GitStatusSnapshot | null;
   /**
@@ -223,7 +222,6 @@ export const FileExplorer = memo(
       onRevealInTerminal,
       onOpenInSourceControl,
       onOpenGitHistory,
-      onAttachToAgent,
       pathDropTarget,
       gitStatus,
       visible = true,
@@ -760,7 +758,6 @@ export const FileExplorer = memo(
           onRevealInTerminal={onRevealInTerminal}
           onOpenInSourceControl={onOpenInSourceControl}
           onOpenGitHistory={onOpenGitHistory}
-          onAttachToAgent={onAttachToAgent}
         />
 
         {!isSearchActive ? (
@@ -997,13 +994,6 @@ export const FileExplorer = memo(
                     }
                   >
                     Copy Relative Path
-                  </ContextMenuItem>
-                  <ContextMenuSeparator />
-                  <ContextMenuItem
-                    className={COMPACT_ITEM}
-                    onSelect={() => onAttachToAgent?.(menuTarget.path)}
-                  >
-                    Attach to Agent
                   </ContextMenuItem>
                   <ContextMenuSeparator />
                   <ContextMenuItem
