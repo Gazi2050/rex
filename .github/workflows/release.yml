@@ -141,3 +141,36 @@ jobs:
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
+
+  # Tauri slugs the product name with dots (Rex.Terminal_1.0.1_amd64.deb).
+  # Normalize every asset to underscores (Rex_Terminal_1.0.1_amd64.deb)
+  # so download names and the in-app update command agree.
+  rename-assets:
+    name: Normalize asset names
+    needs:
+      - version
+      - build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Rename Rex.Terminal_* assets to Rex_Terminal_*
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          TAG="${{ needs.version.outputs.new_tag }}"
+
+          RELEASE_ID=$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${TAG}" --jq '.id')
+
+          gh api "repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}/assets?per_page=100" \
+            --jq '.[] | [.id, .name] | @tsv' |
+          while IFS=$'\t' read -r id name; do
+            case "$name" in
+              Rex.Terminal_*)
+                NEW_NAME="Rex_Terminal_${name#Rex.Terminal_}"
+                gh api -X PATCH "repos/${GITHUB_REPOSITORY}/releases/assets/${id}" \
+                  -f name="$NEW_NAME" --jq '.name'
+                ;;
+            esac
+          done

@@ -17,7 +17,7 @@ type DistroKey = "debian";
 function distroCommand(key: DistroKey, version: string): string {
   switch (key) {
     case "debian":
-      return `sudo apt install ./Rex.Terminal_${version}_amd64.deb`;
+      return `sudo apt install ./Rex_Terminal_${version}_amd64.deb`;
   }
 }
 
