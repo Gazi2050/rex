@@ -78,7 +78,7 @@ Rex 是一个基于 Tauri 2 + Rust 和 React 19 构建的轻量级开源工作�
 
 ## 安装
 
-最新安装包见 [Releases](https://github.com/crynta/terax-ai/releases/latest) 页面。Rex 会从那里自动更新。
+最新安装包见 [Releases](https://github.com/Gazi2050/rex/releases/latest) 页面。Rex 会从那里自动更新。
 
 ### Windows 说明
 
@@ -88,9 +88,8 @@ Rex 是一个基于 Tauri 2 + Rust 和 React 19 构建的轻量级开源工作�
 
 ### Linux 说明
 
-- **Arch / AUR：** `yay -S terax-bin`（或 `paru` 等）。跟随最新发布版本。
-- **NixOS / Nix**：使用官方 flake - 非 NixOS 用户执行 `nix profile install github:crynta/terax-ai`；NixOS 用户导入 flake 并将 `inputs.rex.packages.${pkgs.system}.rex` 加入 `environment.systemPackages`。也可使用更简单的 `nixosModules.rex` 输出。
-- **AppImage：** 需要 FUSE。没有 FUSE 时：`./Terax_*.AppImage --appimage-extract-and-run`。在 Wayland 上如遇渲染异常，可尝试 `WEBKIT_DISABLE_DMABUF_RENDERER=1`。此外，`.deb` / `.rpm` 包链接系统 GTK 栈，通常更流畅。
+- **NixOS / Nix**：使用官方 flake - 非 NixOS 用户执行 `nix profile install github:Gazi2050/rex`；NixOS 用户导入 flake 并将 `inputs.rex.packages.${pkgs.system}.rex` 加入 `environment.systemPackages`。也可使用更简单的 `nixosModules.rex` 输出。
+- **AppImage：** 需要 FUSE。没有 FUSE 时：`./Rex_*.AppImage --appimage-extract-and-run`。在 Wayland 上如遇渲染异常，可尝试 `WEBKIT_DISABLE_DMABUF_RENDERER=1`。此外，`.deb` / `.rpm` 包链接系统 GTK 栈，通常更流畅。
 
 ## 从源码构建
 
@@ -126,14 +125,6 @@ Tauri 2、Rust、`portable-pty`、React 19、TypeScript、Vite、libghostty-vt�
 ## 致谢
 
 Rex 是 [Terax](https://github.com/crynta/terax-ai) 的 fork，原项目由 [@crynta](https://github.com/crynta) 创建并维护。原项目的所有荣誉归于 Crynta。
-
-## 代码签名
-
-<a href="https://signpath.org"><img src="https://avatars.githubusercontent.com/u/34448643?s=200&v=4" width="80" alt="SignPath" align="left" /></a>
-
-Windows 构建使用 [SignPath.io](https://signpath.io) 提供的免费代码签名证书进行签名，证书由 [SignPath Foundation](https://signpath.org) 颁发。
-
-<br clear="left" />
 
 ## 许可证
 

@@ -78,7 +78,7 @@ Rex एक हल्का, ओपन-सोर्स वर्कस्पे�
 
 ## इंस्टॉल
 
-नवीनतम इंस्टॉलर [Releases](https://github.com/crynta/terax-ai/releases/latest) पेज पर हैं। Rex वहाँ से ऑटो-अपडेट होता है।
+नवीनतम इंस्टॉलर [Releases](https://github.com/Gazi2050/rex/releases/latest) पेज पर हैं। Rex वहाँ से ऑटो-अपडेट होता है।
 
 ### Windows नोट्स
 
@@ -88,9 +88,8 @@ Rex एक हल्का, ओपन-सोर्स वर्कस्पे�
 
 ### Linux नोट्स
 
-- **Arch / AUR:** `yay -S terax-bin` (या `paru` आदि)। नवीनतम रिलीज़ को फ़ॉलो करता है।
-- **NixOS / Nix**: आधिकारिक flake इस्तेमाल करें - `nix profile install github:crynta/terax-ai` (गैर-NixOS), या flake इंपोर्ट करके `inputs.rex.packages.${pkgs.system}.rex` को `environment.systemPackages` में जोड़ें (NixOS)। सरल सेटअप के लिए `nixosModules.rex` आउटपुट भी उपलब्ध है।
-- **AppImage:** FUSE चाहिए। बिना: `./Terax_*.AppImage --appimage-extract-and-run`। Wayland पर रेंडरिंग ग्लिच होने पर `WEBKIT_DISABLE_DMABUF_RENDERER=1` आज़माएँ। `.deb` / `.rpm` पैकेज सिस्टम GTK स्टैक से लिंक होते हैं और आमतौर पर बेहतर चलते हैं।
+- **NixOS / Nix**: आधिकारिक flake इस्तेमाल करें - `nix profile install github:Gazi2050/rex` (गैर-NixOS), या flake इंपोर्ट करके `inputs.rex.packages.${pkgs.system}.rex` को `environment.systemPackages` में जोड़ें (NixOS)। सरल सेटअप के लिए `nixosModules.rex` आउटपुट भी उपलब्ध है।
+- **AppImage:** FUSE चाहिए। बिना: `./Rex_*.AppImage --appimage-extract-and-run`। Wayland पर रेंडरिंग ग्लिच होने पर `WEBKIT_DISABLE_DMABUF_RENDERER=1` आज़माएँ। `.deb` / `.rpm` पैकेज सिस्टम GTK स्टैक से लिंक होते हैं और आमतौर पर बेहतर चलते हैं।
 
 ## सोर्स से बिल्ड
 
@@ -126,14 +125,6 @@ Issues और PR का स्वागत है! Issues खोलें, फ�
 ## क्रेडिट
 
 Rex, [Terax](https://github.com/crynta/terax-ai) का फ़ोर्क है, जिसे [@crynta](https://github.com/crynta) ने बनाया और बनाए रखा है। मूल प्रोजेक्ट का सारा श्रेय Crynta को जाता है।
-
-## कोड साइनिंग
-
-<a href="https://signpath.org"><img src="https://avatars.githubusercontent.com/u/34448643?s=200&v=4" width="80" alt="SignPath" align="left" /></a>
-
-Windows बिल्ड [SignPath.io](https://signpath.io) द्वारा दिए गए मुफ़्त कोड साइनिंग सर्टिफ़िकेट से साइन किए जाते हैं, सर्टिफ़िकेट [SignPath Foundation](https://signpath.org) द्वारा।
-
-<br clear="left" />
 
 ## लाइसेंस
 

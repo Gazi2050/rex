@@ -78,7 +78,7 @@ Rex to lekki, otwartoźródłowy terminal przestrzeni roboczej zbudowany na Taur
 
 ## Instalacja
 
-Najnowsze instalatory są na stronie [Releases](https://github.com/crynta/terax-ai/releases/latest). Rex aktualizuje się automatycznie z tego źródła.
+Najnowsze instalatory są na stronie [Releases](https://github.com/Gazi2050/rex/releases/latest). Rex aktualizuje się automatycznie z tego źródła.
 
 ### Uwagi dla Windows
 
@@ -88,9 +88,8 @@ Najnowsze instalatory są na stronie [Releases](https://github.com/crynta/terax-
 
 ### Uwagi dla Linuksa
 
-- **Arch / AUR:** `yay -S terax-bin` (lub `paru` itp.). Śledzi najnowsze wydanie.
-- **NixOS / Nix**: użyj oficjalnego flake'a - `nix profile install github:crynta/terax-ai` (poza NixOS) albo zaimportuj flake i dodaj `inputs.rex.packages.${pkgs.system}.rex` do `environment.systemPackages` (NixOS). Output `nixosModules.rex` jest też dostępny dla prostszej konfiguracji.
-- **AppImage:** wymaga FUSE. Bez niego: `./Terax_*.AppImage --appimage-extract-and-run`. Pod Waylandem przy problemach z renderowaniem spróbuj `WEBKIT_DISABLE_DMABUF_RENDERER=1`. Pakiety `.deb` / `.rpm` linkują z systemowym stosem GTK i zwykle działają płynniej.
+- **NixOS / Nix**: użyj oficjalnego flake'a - `nix profile install github:Gazi2050/rex` (poza NixOS) albo zaimportuj flake i dodaj `inputs.rex.packages.${pkgs.system}.rex` do `environment.systemPackages` (NixOS). Output `nixosModules.rex` jest też dostępny dla prostszej konfiguracji.
+- **AppImage:** wymaga FUSE. Bez niego: `./Rex_*.AppImage --appimage-extract-and-run`. Pod Waylandem przy problemach z renderowaniem spróbuj `WEBKIT_DISABLE_DMABUF_RENDERER=1`. Pakiety `.deb` / `.rpm` linkują z systemowym stosem GTK i zwykle działają płynniej.
 
 ## Budowanie ze źródeł
 
@@ -126,14 +125,6 @@ Issues i PR są mile widziane! Zgłaszaj problemy, proponuj funkcje lub wysyłaj
 ## Zasługi
 
 Rex jest forkiem projektu [Terax](https://github.com/crynta/terax-ai), tworzonym i utrzymywanym przez [@crynta](https://github.com/crynta). Cały wkład w oryginalny projekt należy do Crynty.
-
-## Podpisywanie kodu
-
-<a href="https://signpath.org"><img src="https://avatars.githubusercontent.com/u/34448643?s=200&v=4" width="80" alt="SignPath" align="left" /></a>
-
-Buildy Windows są podpisywane darmowym certyfikatem podpisywania kodu od [SignPath.io](https://signpath.io), certyfikat od [SignPath Foundation](https://signpath.org).
-
-<br clear="left" />
 
 ## Licencja
 

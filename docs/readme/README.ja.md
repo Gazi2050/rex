@@ -78,7 +78,7 @@ Rex は Tauri 2 + Rust と React 19 上に構築された、軽量なオープ�
 
 ## インストール
 
-最新のインストーラーは [Releases](https://github.com/crynta/terax-ai/releases/latest) ページにあります。Rex はそこから自動更新されます。
+最新のインストーラーは [Releases](https://github.com/Gazi2050/rex/releases/latest) ページにあります。Rex はそこから自動更新されます。
 
 ### Windows に関する注意
 
@@ -88,9 +88,8 @@ Rex は Tauri 2 + Rust と React 19 上に構築された、軽量なオープ�
 
 ### Linux に関する注意
 
-- **Arch / AUR：** `yay -S terax-bin`（または `paru` など）。最新リリースに追従します。
-- **NixOS / Nix**：公式 flake を使用 - `nix profile install github:crynta/terax-ai`（非 NixOS）、または flake をインポートして `inputs.rex.packages.${pkgs.system}.rex` を `environment.systemPackages` に追加（NixOS）。より簡単な設定には `nixosModules.rex` 出力も利用できます。
-- **AppImage：** FUSE が必要です。ない場合：`./Terax_*.AppImage --appimage-extract-and-run`。Wayland で描画が乱れる場合は `WEBKIT_DISABLE_DMABUF_RENDERER=1` を試してください。`.deb` / `.rpm` パッケージはシステムの GTK スタックにリンクしており、概して安定します。
+- **NixOS / Nix**：公式 flake を使用 - `nix profile install github:Gazi2050/rex`（非 NixOS）、または flake をインポートして `inputs.rex.packages.${pkgs.system}.rex` を `environment.systemPackages` に追加（NixOS）。より簡単な設定には `nixosModules.rex` 出力も利用できます。
+- **AppImage：** FUSE が必要です。ない場合：`./Rex_*.AppImage --appimage-extract-and-run`。Wayland で描画が乱れる場合は `WEBKIT_DISABLE_DMABUF_RENDERER=1` を試してください。`.deb` / `.rpm` パッケージはシステムの GTK スタックにリンクしており、概して安定します。
 
 ## ソースからビルド
 
@@ -126,14 +125,6 @@ Issue と PR を歓迎します！機能の提案やプルリクエストの送�
 ## クレジット
 
 Rex は [@crynta](https://github.com/crynta) が作成・保守している [Terax](https://github.com/crynta/terax-ai) のフォークです。オリジナルプロジェクトの全ての功績は Crynta に帰属します。
-
-## コード署名
-
-<a href="https://signpath.org"><img src="https://avatars.githubusercontent.com/u/34448643?s=200&v=4" width="80" alt="SignPath" align="left" /></a>
-
-Windows ビルドは [SignPath.io](https://signpath.org) が提供する無料のコード署名証明書（証明書は [SignPath Foundation](https://signpath.org)）で署名されています。
-
-<br clear="left" />
 
 ## ライセンス
 

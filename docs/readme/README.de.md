@@ -78,7 +78,7 @@ Rex ist ein leichtgewichtiges, quelloffenes Workspace-Terminal, gebaut mit Tauri
 
 ## Installation
 
-Die neuesten Installer findest du auf der [Releases](https://github.com/crynta/terax-ai/releases/latest)-Seite. Rex aktualisiert sich von dort automatisch.
+Die neuesten Installer findest du auf der [Releases](https://github.com/Gazi2050/rex/releases/latest)-Seite. Rex aktualisiert sich von dort automatisch.
 
 ### Windows-Hinweise
 
@@ -88,9 +88,8 @@ Die neuesten Installer findest du auf der [Releases](https://github.com/crynta/t
 
 ### Linux-Hinweise
 
-- **Arch / AUR:** `yay -S terax-bin` (oder `paru` etc.). Folgt der neuesten Version.
-- **NixOS / Nix**: benutze das offizielle Flake - `nix profile install github:crynta/terax-ai` (nicht NixOS), oder importiere das Flake und füge `inputs.rex.packages.${pkgs.system}.rex` zu `environment.systemPackages` hinzu (NixOS). Der `nixosModules.rex`-Output ist für eine einfachere Einrichtung ebenfalls verfügbar.
-- **AppImage:** braucht FUSE. Ohne: `./Terax_*.AppImage --appimage-extract-and-run`. Bei Rendering-Problemen unter Wayland: `WEBKIT_DISABLE_DMABUF_RENDERER=1`. Die `.deb`-/`.rpm`-Pakete linken gegen den System-GTK-Stack und laufen meist runder.
+- **NixOS / Nix**: benutze das offizielle Flake - `nix profile install github:Gazi2050/rex` (nicht NixOS), oder importiere das Flake und füge `inputs.rex.packages.${pkgs.system}.rex` zu `environment.systemPackages` hinzu (NixOS). Der `nixosModules.rex`-Output ist für eine einfachere Einrichtung ebenfalls verfügbar.
+- **AppImage:** braucht FUSE. Ohne: `./Rex_*.AppImage --appimage-extract-and-run`. Bei Rendering-Problemen unter Wayland: `WEBKIT_DISABLE_DMABUF_RENDERER=1`. Die `.deb`-/`.rpm`-Pakete linken gegen den System-GTK-Stack und laufen meist runder.
 
 ## Aus dem Quellcode bauen
 
@@ -126,14 +125,6 @@ Issues und PRs sind willkommen! Öffne Issues, schlage Funktionen vor oder reich
 ## Danksagung
 
 Rex ist ein Fork von [Terax](https://github.com/crynta/terax-ai), erstellt und gepflegt von [@crynta](https://github.com/crynta). Alle Anerkennung für das Originalprojekt gebührt Crynta.
-
-## Code-Signierung
-
-<a href="https://signpath.org"><img src="https://avatars.githubusercontent.com/u/34448643?s=200&v=4" width="80" alt="SignPath" align="left" /></a>
-
-Windows-Builds werden mit einem kostenlosen Code-Signing-Zertifikat von [SignPath.io](https://signpath.io) signiert, Zertifikat von der [SignPath Foundation](https://signpath.org).
-
-<br clear="left" />
 
 ## Lizenz
 

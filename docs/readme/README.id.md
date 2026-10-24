@@ -78,7 +78,7 @@ Rex adalah terminal workspace ringan dan open source yang dibangun di atas Tauri
 
 ## Instalasi
 
-Pemasang terbaru ada di halaman [Releases](https://github.com/crynta/terax-ai/releases/latest). Rex memperbarui dirinya secara otomatis dari sana.
+Pemasang terbaru ada di halaman [Releases](https://github.com/Gazi2050/rex/releases/latest). Rex memperbarui dirinya secara otomatis dari sana.
 
 ### Catatan Windows
 
@@ -88,9 +88,8 @@ Pemasang terbaru ada di halaman [Releases](https://github.com/crynta/terax-ai/re
 
 ### Catatan Linux
 
-- **Arch / AUR:** `yay -S terax-bin` (atau `paru`, dll.). Mengikuti rilis terbaru.
-- **NixOS / Nix**: gunakan flake resmi - `nix profile install github:crynta/terax-ai` (bukan NixOS), atau impor flake dan tambahkan `inputs.rex.packages.${pkgs.system}.rex` ke `environment.systemPackages` (NixOS). Output `nixosModules.rex` juga tersedia untuk penyiapan yang lebih sederhana.
-- **AppImage:** butuh FUSE. Tanpa itu: `./Terax_*.AppImage --appimage-extract-and-run`. Di Wayland dengan gangguan rendering, coba `WEBKIT_DISABLE_DMABUF_RENDERER=1`. Paket `.deb` / `.rpm` menaut ke stack GTK sistem dan cenderung lebih lancar.
+- **NixOS / Nix**: gunakan flake resmi - `nix profile install github:Gazi2050/rex` (bukan NixOS), atau impor flake dan tambahkan `inputs.rex.packages.${pkgs.system}.rex` ke `environment.systemPackages` (NixOS). Output `nixosModules.rex` juga tersedia untuk penyiapan yang lebih sederhana.
+- **AppImage:** butuh FUSE. Tanpa itu: `./Rex_*.AppImage --appimage-extract-and-run`. Di Wayland dengan gangguan rendering, coba `WEBKIT_DISABLE_DMABUF_RENDERER=1`. Paket `.deb` / `.rpm` menaut ke stack GTK sistem dan cenderung lebih lancar.
 
 ## Membangun dari sumber
 
@@ -126,14 +125,6 @@ Issue dan PR diterima dengan senang hati! Buka issue, sarankan fitur, atau kirim
 ## Kredit
 
 Rex adalah fork dari [Terax](https://github.com/crynta/terax-ai), yang dibuat dan dirawat oleh [@crynta](https://github.com/crynta). Seluruh kredit untuk proyek asli diberikan kepada Crynta.
-
-## Penandatanganan kode
-
-<a href="https://signpath.org"><img src="https://avatars.githubusercontent.com/u/34448643?s=200&v=4" width="80" alt="SignPath" align="left" /></a>
-
-Build Windows ditandatangani dengan sertifikat penandatanganan kode gratis dari [SignPath.io](https://signpath.io), sertifikat oleh [SignPath Foundation](https://signpath.org).
-
-<br clear="left" />
 
 ## Lisensi
 

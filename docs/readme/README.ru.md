@@ -78,7 +78,7 @@ Rex - это легковесный терминал рабочего прост
 
 ## Установка
 
-Последние установщики на странице [Releases](https://github.com/crynta/terax-ai/releases/latest). Rex обновляется автоматически оттуда.
+Последние установщики на странице [Releases](https://github.com/Gazi2050/rex/releases/latest). Rex обновляется автоматически оттуда.
 
 ### Примечания для Windows
 
@@ -88,9 +88,8 @@ Rex - это легковесный терминал рабочего прост
 
 ### Примечания для Linux
 
-- **Arch / AUR:** `yay -S terax-bin` (или `paru` и т.п.). Следит за последним релизом.
-- **NixOS / Nix**: используйте официальный flake - `nix profile install github:crynta/terax-ai` (не NixOS), либо импортируйте flake и добавьте `inputs.rex.packages.${pkgs.system}.rex` в `environment.systemPackages` (NixOS). Для более простой настройки доступен также выход `nixosModules.rex`.
-- **AppImage:** нужен FUSE. Без него: `./Terax_*.AppImage --appimage-extract-and-run`. При артефактах рендеринга под Wayland попробуйте `WEBKIT_DISABLE_DMABUF_RENDERER=1`. Пакеты `.deb` / `.rpm` линкуются с системным стеком GTK и обычно работают стабильнее.
+- **NixOS / Nix**: используйте официальный flake - `nix profile install github:Gazi2050/rex` (не NixOS), либо импортируйте flake и добавьте `inputs.rex.packages.${pkgs.system}.rex` в `environment.systemPackages` (NixOS). Для более простой настройки доступен также выход `nixosModules.rex`.
+- **AppImage:** нужен FUSE. Без него: `./Rex_*.AppImage --appimage-extract-and-run`. При артефактах рендеринга под Wayland попробуйте `WEBKIT_DISABLE_DMABUF_RENDERER=1`. Пакеты `.deb` / `.rpm` линкуются с системным стеком GTK и обычно работают стабильнее.
 
 ## Сборка из исходников
 
@@ -126,14 +125,6 @@ Issues и PR приветствуются! Открывайте issues, пред
 ## Благодарности
 
 Rex - это форк [Terax](https://github.com/crynta/terax-ai), созданного и поддерживаемого [@crynta](https://github.com/crynta). Все заслуги за оригинальный проект принадлежат Crynta.
-
-## Подпись кода
-
-<a href="https://signpath.org"><img src="https://avatars.githubusercontent.com/u/34448643?s=200&v=4" width="80" alt="SignPath" align="left" /></a>
-
-Сборки для Windows подписываются бесплатным сертификатом подписи кода от [SignPath.io](https://signpath.org), сертификат предоставлен [SignPath Foundation](https://signpath.org).
-
-<br clear="left" />
 
 ## Лицензия
 

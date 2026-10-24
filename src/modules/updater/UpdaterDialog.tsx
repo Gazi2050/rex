@@ -12,21 +12,18 @@ import { openUrl } from "@tauri-apps/plugin-opener";
 import { useState } from "react";
 import { useUpdater } from "./useUpdater";
 
-type DistroKey = "arch" | "debian" | "fedora";
+type DistroKey = "debian" | "fedora";
 
 function distroCommand(key: DistroKey, version: string): string {
   switch (key) {
-    case "arch":
-      return "yay -S terax-bin";
     case "debian":
-      return `sudo apt install ./Terax_${version}_amd64.deb`;
+      return `sudo apt install ./Rex_${version}_amd64.deb`;
     case "fedora":
-      return `sudo dnf install ./Terax-${version}-1.x86_64.rpm`;
+      return `sudo dnf install ./Rex-${version}-1.x86_64.rpm`;
   }
 }
 
 const DISTROS: { key: DistroKey; label: string }[] = [
-  { key: "arch", label: "Arch" },
   { key: "debian", label: "Debian / Ubuntu" },
   { key: "fedora", label: "Fedora / RHEL" },
 ];
@@ -40,7 +37,7 @@ function formatBytes(n: number): string {
 export function UpdaterDialog() {
   const { status, install, dismiss } = useUpdater();
   const [copied, setCopied] = useState(false);
-  const [distro, setDistro] = useState<DistroKey>("arch");
+  const [distro, setDistro] = useState<DistroKey>("debian");
   const manualVersion =
     status.kind === "manual-available" ? status.info.version : "";
   const activeCommand = distroCommand(distro, manualVersion);

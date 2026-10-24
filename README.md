@@ -77,7 +77,7 @@ Rex is a lightweight, open-source workspace terminal built on Tauri 2 + Rust and
 
 ## Install
 
-Latest installers are on the [Releases](https://github.com/crynta/terax-ai/releases/latest) page. Rex auto-updates from there.
+Latest installers are on the [Releases](https://github.com/Gazi2050/rex/releases/latest) page. Rex auto-updates from there.
 
 ### Windows notes
 
@@ -87,9 +87,8 @@ Latest installers are on the [Releases](https://github.com/crynta/terax-ai/relea
 
 ### Linux notes
 
-- **Arch / AUR:** `yay -S terax-bin` (or `paru`, etc.). Tracks the latest release.
-- **NixOS / Nix**: use the official flake - `nix profile install github:crynta/terax-ai` (non-NixOS), or import the flake and add `inputs.rex.packages.${pkgs.system}.rex` to `environment.systemPackages` (NixOS). The `nixosModules.rex` output is also available for a simpler setup.
-- **AppImage:** needs FUSE. Without it: `./Terax_*.AppImage --appimage-extract-and-run`. On Wayland with rendering glitches, try `WEBKIT_DISABLE_DMABUF_RENDERER=1`. Otherwise the `.deb` / `.rpm` packages link against the system GTK stack and tend to be smoother.
+- **NixOS / Nix**: use the official flake - `nix profile install github:Gazi2050/rex` (non-NixOS), or import the flake and add `inputs.rex.packages.${pkgs.system}.rex` to `environment.systemPackages` (NixOS). The `nixosModules.rex` output is also available for a simpler setup.
+- **AppImage:** needs FUSE. Without it: `./Rex_*.AppImage --appimage-extract-and-run`. On Wayland with rendering glitches, try `WEBKIT_DISABLE_DMABUF_RENDERER=1`. Otherwise the `.deb` / `.rpm` packages link against the system GTK stack and tend to be smoother.
 
 ## Build from source
 
@@ -125,14 +124,6 @@ Issues and PRs are welcome! Feel free to open issues, suggest features, or submi
 ## Credits
 
 Rex is a fork of [Terax](https://github.com/crynta/terax-ai), created and maintained by [@crynta](https://github.com/crynta). All credit for the original project goes to Crynta.
-
-## Code signing
-
-<a href="https://signpath.org"><img src="https://avatars.githubusercontent.com/u/34448643?s=200&v=4" width="80" alt="SignPath" align="left" /></a>
-
-Windows builds are signed with a free code signing certificate provided by [SignPath.io](https://signpath.io), certificate by the [SignPath Foundation](https://signpath.org).
-
-<br clear="left" />
 
 ## License
 

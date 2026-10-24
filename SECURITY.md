@@ -14,7 +14,7 @@ We'll get back to you within a few days. Once it's fixed, we'll credit you in th
 
 ## Supported versions
 
-Until `1.0.0`, only the latest minor gets security fixes. See the current version in `package.json` or on the [Releases page](https://github.com/crynta/terax-ai/releases). 
+Until `1.0.0`, only the latest minor gets security fixes. See the current version in `package.json` or on the [Releases page](https://github.com/Gazi2050/rex/releases). 
 
 ## What's in scope
 
