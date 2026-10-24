@@ -181,21 +181,16 @@ class ScenarioRun {
     );
   }
 
-  async newAgentTab(
-    title: string,
-    extraArgs = "",
-  ): Promise<{ tabId: number; leafId: number }> {
-    const { tabId, leafIds } = this.app().newAgentGroupTab(
-      this.scenario.cwds?.agent,
-      title,
-      1,
-    );
+  async newAgentTab(extraArgs = ""): Promise<{ tabId: number; leafId: number }> {
+    const tabId = this.app().newTab(this.scenario.cwds?.agent);
     await this.waitFor(
       () => this.app().tabs.some((t) => t.id === tabId),
       "new tab",
     );
-    await this.startAgent(leafIds[0], extraArgs);
-    return { tabId, leafId: leafIds[0] };
+    const tab = this.app().tabs.find((t) => t.id === tabId);
+    if (!tab || tab.kind !== "terminal") throw new Error("no terminal tab");
+    await this.startAgent(tab.activeLeafId, extraArgs);
+    return { tabId, leafId: tab.activeLeafId };
   }
 
   async newShellTab(): Promise<{ tabId: number; leafId: number }> {
@@ -342,10 +337,7 @@ async function tabsScenario(run: ScenarioRun): Promise<void> {
       order.push(tab.tabId);
       leaves.push([tab.leafId]);
     } else {
-      const tab = await run.newAgentTab(
-        kind === "p" ? "agent pair" : "agent",
-        `--seed ${index + 1}`,
-      );
+      const tab = await run.newAgentTab(`--seed ${index + 1}`);
       const group = [tab.leafId];
       if (kind === "p") {
         run.select(tab.tabId);
@@ -705,7 +697,7 @@ async function agentsSteadyScenario(run: ScenarioRun): Promise<void> {
   const first = await run.booted();
   await run.startAgent(first.leafId);
   for (let i = 0; i < hidden; i++)
-    await run.newAgentTab(`agent ${i + 2}`, `--seed ${i + 2}`);
+    await run.newAgentTab(`--seed ${i + 2}`);
   run.select(first.tabId);
   await pause(warmupS * 1000);
   await run.sync("setup-complete", { hiddenAgents: hidden });

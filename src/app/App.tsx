@@ -1,11 +1,4 @@
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
@@ -17,12 +10,6 @@ import { IS_MAC } from "@/lib/platform";
 import { quoteShellArg } from "@/lib/shellQuote";
 import { useZoom } from "@/lib/useZoom";
 import { isMarkdownPath } from "@/lib/utils";
-import {
-  AgentLauncherPanel,
-  type AgentLaunchRequest,
-  findAgentLauncher,
-  validateAgentLaunchCommand,
-} from "@/modules/agents";
 import { useControlBridge } from "@/modules/control";
 import {
   type EditorPaneHandle,
@@ -83,12 +70,8 @@ import {
   isTerminalSurfaceTarget,
   leafIds,
   type PaneBounds,
-  ptyIdForLeaf,
   type TerminalPaneHandle,
-  useAgentActivityStore,
   useTerminalFileDrop,
-  whenSessionReady,
-  writeToSession,
 } from "@/modules/terminal";
 import { bindTerminalWindowFocus } from "@/modules/terminal/ghostty/renderScheduling";
 import { subscribeWindowPresentation } from "@/modules/terminal/ghostty/windowPresentation";
@@ -106,7 +89,6 @@ import {
   type WorkspaceEnv,
   workspaceScopeKey,
 } from "@/modules/workspace";
-import { invoke } from "@tauri-apps/api/core";
 import { native } from "@/modules/native";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
@@ -153,7 +135,6 @@ export default function App() {
     markBooted,
     setActiveSpaceForNewTabs,
     newTab,
-    newAgentGroupTab,
     newPrivateTab,
     openFileTab,
     pinTab,
@@ -321,7 +302,6 @@ export default function App() {
   } = useSidebarPanel(explorerRef);
 
   const [newEditorOpen, setNewEditorOpen] = useState(false);
-  const [agentLauncherOpen, setAgentLauncherOpen] = useState(false);
 
   const activeTab = tabs.find((t) => t.id === activeId);
   const isTerminalTab = activeTab?.kind === "terminal";
@@ -439,16 +419,6 @@ export default function App() {
       if (!live.has(k)) searchAddons.current.delete(k);
   }, [tabs]);
 
-  useEffect(() => {
-    const tab = tabsRef.current.find((t) => t.id === activeId);
-    if (tab?.kind !== "terminal") return;
-    const ptyIds = leafIds(tab.paneTree).flatMap((leafId) => {
-      const ptyId = ptyIdForLeaf(leafId);
-      return ptyId === null ? [] : [ptyId];
-    });
-    useAgentActivityStore.getState().acknowledgeAttention(ptyIds);
-  }, [activeId]);
-
   // Most-recently-used tab ids, most recent first, pruned to live tabs. Drives
   // the Ctrl+Tab quick switcher so it cycles by recency, not strip order.
   const mruRef = useRef<number[]>([activeId]);
@@ -496,45 +466,6 @@ export default function App() {
   const openNewPrivateTab = useCallback(() => {
     newPrivateTab(inheritedCwdForNewTab());
   }, [newPrivateTab, inheritedCwdForNewTab]);
-
-  const launchAgentGroup = useCallback(
-    (request: AgentLaunchRequest) => {
-      const command = validateAgentLaunchCommand(request.command);
-      if (!command.ok) return;
-      const launcher = findAgentLauncher(request.agent);
-      const title =
-        request.instances === 1
-          ? launcher.label
-          : `${launcher.label} × ${request.instances}`;
-      const { leafIds: agentLeafIds } = newAgentGroupTab(
-        inheritedCwdForNewTab(),
-        title,
-        request.instances,
-      );
-      const hooksReady = launcher.supportsHooks
-        ? invoke("agent_enable_hooks", {
-            agent: request.agent,
-          }).catch((error) => {
-            console.warn(
-              `[rex] could not enable ${request.agent} notifications:`,
-              error,
-            );
-          })
-        : Promise.resolve();
-
-      for (const leafId of agentLeafIds) {
-        void (async () => {
-          await Promise.all([whenSessionReady(leafId), hooksReady]);
-          if (!writeToSession(leafId, `${command.command}\r`)) {
-            console.error(
-              `[rex] agent terminal ${leafId} closed before launch`,
-            );
-          }
-        })();
-      }
-    },
-    [inheritedCwdForNewTab, newAgentGroupTab],
-  );
 
   const sendCd = useCallback(
     (path: string) => {
@@ -1169,7 +1100,6 @@ export default function App() {
               booted={booted}
               setActiveId={setActiveId}
               newTab={newTab}
-              newAgentGroupTab={newAgentGroupTab}
               splitActivePane={splitActivePane}
               closeTab={closeTab}
               readBuffer={(leafId, maxLines) =>
@@ -1334,23 +1264,6 @@ export default function App() {
           {switcherState && (
             <TabSwitcherHud tabs={spaceTabs} state={switcherState} />
           )}
-
-          <Dialog open={agentLauncherOpen} onOpenChange={setAgentLauncherOpen}>
-            <DialogContent className="sm:max-w-sm">
-              <DialogHeader>
-                <DialogTitle>Launch agents</DialogTitle>
-                <DialogDescription>
-                  Choose an agent and how many panes to open.
-                </DialogDescription>
-              </DialogHeader>
-              <AgentLauncherPanel
-                onLaunch={(request) => {
-                  launchAgentGroup(request);
-                  setAgentLauncherOpen(false);
-                }}
-              />
-            </DialogContent>
-          </Dialog>
 
           <NewEditorDialog
             open={newEditorOpen}

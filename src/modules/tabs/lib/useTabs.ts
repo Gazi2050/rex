@@ -1,9 +1,5 @@
 import { isMarkdownPath } from "@/lib/utils";
 import {
-  type AgentInstanceCount,
-  createAgentPanePlan,
-} from "@/modules/agents/lib/launcher";
-import {
   findLeafCwd,
   hasLeaf,
   leafIds,
@@ -736,41 +732,6 @@ export function useTabs(initial?: Partial<TerminalTab>) {
     ).__rexNewBlockTab = newTab;
   }, [newTab]);
 
-  const newAgentGroupTab = useCallback(
-    (cwd: string | undefined, title: string, instances: AgentInstanceCount) => {
-      const tabId = nextIdRef.current++;
-      const { paneTree, leafIds: agentLeafIds } = createAgentPanePlan(
-        instances,
-        () => nextIdRef.current++,
-        cwd,
-      );
-      setTabs((t) => [
-        ...t,
-        {
-          id: tabId,
-          kind: "terminal",
-          spaceId: activeSpaceIdRef.current,
-          title,
-          customTitle: title,
-          cwd,
-          paneTree,
-          activeLeafId: agentLeafIds[0],
-        },
-      ]);
-      setActiveId(tabId);
-      return { tabId, leafIds: agentLeafIds };
-    },
-    [],
-  );
-
-  const newAgentTab = useCallback(
-    (cwd: string | undefined, title: string) => {
-      const { tabId, leafIds: agentLeafIds } = newAgentGroupTab(cwd, title, 1);
-      return { tabId, leafId: agentLeafIds[0] };
-    },
-    [newAgentGroupTab],
-  );
-
   const newPrivateTab = useCallback((cwd?: string) => {
     const tabId = nextIdRef.current++;
     const leafId = nextIdRef.current++;
@@ -1287,8 +1248,6 @@ export function useTabs(initial?: Partial<TerminalTab>) {
     markBooted,
     setActiveSpaceForNewTabs,
     newTab,
-    newAgentTab,
-    newAgentGroupTab,
     newPrivateTab,
     openFileTab,
     pinTab,

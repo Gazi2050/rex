@@ -1,8 +1,3 @@
-import {
-  type AgentLaunchCommands,
-  DEFAULT_AGENT_LAUNCH_COMMANDS,
-  normalizeAgentLaunchCommands,
-} from "@/modules/agents/lib/launcher";
 import type { KeyBinding, ShortcutId } from "@/modules/shortcuts/shortcuts";
 import { emit, listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { LazyStore } from "@tauri-apps/plugin-store";
@@ -132,7 +127,6 @@ export type Preferences = {
   confirmCloseRunningTerminal: boolean;
   lastWslDistro: string | null;
   zoomLevel: number;
-  agentLaunchCommands: AgentLaunchCommands;
   defaultWorkspaceEnv: string;
   shortcuts: Record<ShortcutId, KeyBinding[]>;
   editorAutoSave: boolean;
@@ -202,7 +196,6 @@ const KEY_TERMINAL_SCROLLBACK = "terminalScrollback";
 const KEY_CONFIRM_CLOSE_RUNNING_TERMINAL = "confirmCloseRunningTerminal";
 const KEY_LAST_WSL_DISTRO = "lastWslDistro";
 const KEY_ZOOM_LEVEL = "zoomLevel";
-const KEY_AGENT_LAUNCH_COMMANDS = "agentLaunchCommands";
 const KEY_DEFAULT_WORKSPACE_ENV = "defaultWorkspaceEnv";
 const KEY_SHORTCUTS = "shortcuts";
 const KEY_EDITOR_AUTO_SAVE = "editorAutoSave";
@@ -275,7 +268,6 @@ export const DEFAULT_PREFERENCES: Preferences = {
   confirmCloseRunningTerminal: true,
   lastWslDistro: null,
   zoomLevel: 1.25,
-  agentLaunchCommands: DEFAULT_AGENT_LAUNCH_COMMANDS,
   defaultWorkspaceEnv: "local",
   shortcuts: {} as Record<ShortcutId, KeyBinding[]>,
   editorAutoSave: false,
@@ -383,9 +375,6 @@ export async function loadPreferences(): Promise<Preferences> {
       get<string | null>(KEY_LAST_WSL_DISTRO) ??
       DEFAULT_PREFERENCES.lastWslDistro,
     zoomLevel: get<number>(KEY_ZOOM_LEVEL) ?? DEFAULT_PREFERENCES.zoomLevel,
-    agentLaunchCommands: normalizeAgentLaunchCommands(
-      get<unknown>(KEY_AGENT_LAUNCH_COMMANDS),
-    ),
     defaultWorkspaceEnv:
       get<string>(KEY_DEFAULT_WORKSPACE_ENV) ??
       DEFAULT_PREFERENCES.defaultWorkspaceEnv,
@@ -672,15 +661,6 @@ export async function setEditorCustomFormatCommand(
   await writePref(KEY_EDITOR_CUSTOM_FORMAT_COMMAND, value);
 }
 
-export async function setAgentLaunchCommands(
-  value: AgentLaunchCommands,
-): Promise<void> {
-  await writePref(
-    KEY_AGENT_LAUNCH_COMMANDS,
-    normalizeAgentLaunchCommands(value),
-  );
-}
-
 export async function setDefaultWorkspaceEnv(value: string): Promise<void> {
   await writePref(KEY_DEFAULT_WORKSPACE_ENV, value);
 }
@@ -727,7 +707,6 @@ export async function onPreferencesChange(
     [KEY_CONFIRM_CLOSE_RUNNING_TERMINAL]: "confirmCloseRunningTerminal",
     [KEY_LAST_WSL_DISTRO]: "lastWslDistro",
     [KEY_ZOOM_LEVEL]: "zoomLevel",
-    [KEY_AGENT_LAUNCH_COMMANDS]: "agentLaunchCommands",
     [KEY_DEFAULT_WORKSPACE_ENV]: "defaultWorkspaceEnv",
     [KEY_SHORTCUTS]: "shortcuts",
     [KEY_EDITOR_AUTO_SAVE]: "editorAutoSave",
