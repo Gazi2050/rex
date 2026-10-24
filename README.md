@@ -3,13 +3,6 @@
   <h1>Rex</h1>
 
   <p><strong>Lightweight Terminal-first AI-native dev workspace.</strong></p>
-  <p>
-    <a href="https://terax.app">Website</a>
-    ·
-    <a href="https://terax.app/docs">Docs</a>
-    ·
-    <a href="https://github.com/crynta/Terax-website">Website's source code</a>
-  </p>
 
   <p>
     <img src="https://img.shields.io/github/v/release/crynta/terax-ai?label=version&color=blue" alt="version" />
