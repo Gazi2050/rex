@@ -1,4 +1,3 @@
-mod agent_detect;
 mod da_filter;
 mod foreground;
 mod gate;
@@ -480,7 +479,6 @@ mod tests {
                 owner: Arc::from(owner),
                 hub: state.hub.clone(),
                 class: PresentationClass::Hidden,
-                signal: Arc::new(|_| {}),
                 reap: Box::new(move || {
                     if let Some(session) = reaper.take(id) {
                         session::drop_session(session);

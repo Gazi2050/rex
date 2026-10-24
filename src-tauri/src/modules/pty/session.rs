@@ -5,10 +5,9 @@ use std::thread;
 use std::time::{Duration, Instant};
 
 use portable_pty::{native_pty_system, ChildKiller, CommandBuilder, MasterPty, PtySize};
-use tauri::{AppHandle, Emitter, Manager};
+use tauri::{AppHandle, Manager};
 use tokio::sync::{mpsc, oneshot};
 
-use super::agent_detect::{AgentDetector, AgentSignal};
 use super::da_filter::DaFilter;
 use super::hub::{Command, Hub};
 use super::presentation::PresentationClass;
@@ -16,15 +15,12 @@ use super::queue::{OutputQueue, QueueDiagnostics};
 use super::shell_init;
 use crate::modules::workspace::WorkspaceEnv;
 
-const AGENT_EVENT: &str = "rex:agent-signal";
-
 const READ_BUF: usize = 16 * 1024;
 const EXIT_ACK_TIMEOUT: Duration = Duration::from_secs(30);
 /// Writes queued ahead of the writer thread; a full queue applies async
 /// backpressure to `pty_write` instead of growing without bound.
 const INPUT_QUEUE: usize = 64;
-// Three small threads per PTY: keep their stacks small. The reader calls
-// Tauri's event emit, so it keeps a little more than the others.
+// Three small threads per PTY: keep their stacks small.
 const READER_STACK: usize = 256 * 1024;
 const WRITER_STACK: usize = 128 * 1024;
 const WAITER_STACK: usize = 256 * 1024;
@@ -195,8 +191,6 @@ pub(super) struct Host {
     pub owner: Arc<str>,
     pub hub: Hub,
     pub class: PresentationClass,
-    /// Agent detector transitions (an app event in production).
-    pub signal: Arc<dyn Fn(AgentSignal) + Send + Sync>,
     /// Runs on the waiter thread once the exit frame was delivered.
     pub reap: Box<dyn FnOnce() + Send>,
 }
@@ -215,16 +209,12 @@ pub fn spawn(
     shell: Option<String>,
     control: Option<crate::modules::control::ShellControlEnv>,
 ) -> Result<Arc<Session>, String> {
-    let emitter = app.clone();
     spawn_with(
         Host {
             id,
             owner,
             hub,
             class,
-            signal: Arc::new(move |signal| {
-                let _ = emitter.emit(AGENT_EVENT, signal);
-            }),
             reap: Box::new(move || {
                 if let Some(state) = app.try_state::<super::PtyState>() {
                     if let Some(s) = state.take(id) {
@@ -256,7 +246,6 @@ pub(super) fn spawn_with(
         owner,
         hub,
         class,
-        signal,
         reap,
     } = host;
     let pty_system = native_pty_system();
@@ -354,7 +343,6 @@ pub(super) fn spawn_with(
             // Reused for every filtered read: no per-chunk allocation.
             let mut filtered: Vec<u8> = Vec::with_capacity(READ_BUF);
             let mut da_filter = DaFilter::new();
-            let mut agent_detect = AgentDetector::new();
             let mut first_byte = false;
             loop {
                 match reader.read(&mut buf) {
@@ -374,7 +362,6 @@ pub(super) fn spawn_with(
                             );
                         }
                         let read = &buf[..n];
-                        agent_detect.process(read, |t| signal(t.into_signal(id)));
                         let chunk: &[u8] = if da_filter.passes_through(read) {
                             read
                         } else {
@@ -416,7 +403,6 @@ pub(super) fn spawn_with(
                     }
                 }
             }
-            agent_detect.finish(|t| signal(t.into_signal(id)));
             output_r.finish_reading();
         })
         .map_err(|e| spawn_error("reader", e))?;
@@ -596,7 +582,6 @@ mod tests {
                 owner: Arc::from("main"),
                 hub: hub.clone(),
                 class: PresentationClass::Focused,
-                signal: Arc::new(|_| {}),
                 reap: Box::new(move || {
                     let _ = reaped.send(());
                 }),

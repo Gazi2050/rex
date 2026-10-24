@@ -3,10 +3,8 @@ pub mod modules;
 #[cfg(target_os = "macos")]
 use modules::app_menu;
 use modules::{
-    control, fs, git, history, lsp, pty, secrets, shell, vibrancy, workspace,
+    control, fs, git, history, lsp, pty, shell, vibrancy, workspace,
 };
-#[cfg(windows)]
-use modules::agent;
 use std::path::PathBuf;
 use std::sync::Mutex;
 use tauri::{Emitter, Manager, State, WebviewUrl, WebviewWindowBuilder};
@@ -173,9 +171,6 @@ pub fn run() {
             args.get(1).map(String::as_str),
             Some("__rex_notify") | Some("__terax_notify")
         ) {
-            if let (Some(agent), Some(event)) = (args.get(2), args.get(3)) {
-                agent::emit_conout_marker(agent, event);
-            }
             use std::io::Write;
             let mut out = std::io::stdout();
             let _ = out.write_all(b"{}");
@@ -253,7 +248,6 @@ pub fn run() {
         .manage(modules::window_presentation::WindowPresentationState::default())
         .manage(control_state)
         .manage(shell::ShellState::default())
-        .manage(secrets::SecretsState::default())
         .manage(fs::watch::FsWatchState::default())
         .manage(history::HistoryState::default())
         .manage(lsp::LspState::default())
@@ -346,10 +340,6 @@ pub fn run() {
             get_launch_dir,
             get_launch_files,
             open_settings_window,
-            secrets::secrets_get,
-            secrets::secrets_set,
-            secrets::secrets_delete,
-            secrets::secrets_get_all,
             history::history_suggest,
             history::history_commands,
             history::history_record,
