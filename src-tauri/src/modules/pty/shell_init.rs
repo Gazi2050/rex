@@ -107,7 +107,7 @@ pub struct ShellInfo {
     pub name: String,
     pub path: String,
     /// True when Rex injects OSC 7/133 integration for this shell (cwd
-    /// tracking and agent detection). Others spawn bare.
+    /// tracking and prompt marks). Others spawn bare.
     pub integrated: bool,
 }
 

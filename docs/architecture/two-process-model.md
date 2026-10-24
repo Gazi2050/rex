@@ -6,7 +6,7 @@ This guide elaborates on `REX.md`. If anything here conflicts with `REX.md`, `RE
 
 Rex is two processes: the Rust backend (`src-tauri/`) and the webview frontend (`src/`).
 
-- **Rust owns all OS access**: PTY, file system, git, shell spawn, network, secrets, workspace authorization.
+- **Rust owns all OS access**: PTY, file system, git, shell spawn, workspace authorization.
 - **The webview never touches the FS, processes, or shells directly**. Every host operation goes through an `invoke()` call to a command registered in `src-tauri/src/lib.rs`.
 
 This boundary is the root of the security model. Untrusted input (terminal escape sequences, file content, AI tool results) is parsed and validated in Rust or in carefully scoped frontend code, never executed by the renderer.
@@ -87,36 +87,20 @@ All git commands are gated through the workspace authorization registry.
 - `git_log` / `git_show_commit` / `git_commit_files` / `git_commit_file_diff`
 - `git_remote_url`
 - `git_list_branches` / `git_checkout_branch`
+- `git_ai_commit_message` - generate a conventional commit message from the staged diff via gli's keyless diny.run endpoint (click-invoked; see the security model for the egress boundary)
 
 ### Shell (`src-tauri/src/modules/shell/`)
 
 Three distinct surfaces:
 
-- `shell_run_command` - one-shot subshell exec for AI tools
-- `shell_session_open` / `shell_session_run` / `shell_session_close` - persistent agent shell with state across calls
+- `shell_run_command` - one-shot subshell exec
+- `shell_session_open` / `shell_session_run` / `shell_session_close` - persistent shell with state across calls
 - `shell_bg_spawn` / `shell_bg_logs` / `shell_bg_kill` / `shell_bg_list` - long-running background processes with bounded ring-buffer log capture
 
 ### Workspace (`src-tauri/src/modules/workspace.rs`)
 
-- `workspace_authorize` / `workspace_current_dir` - the spawn/git/AI cwd authorization registry
+- `workspace_authorize` / `workspace_current_dir` - the spawn/git cwd authorization registry
 - `wsl_list_distros` / `wsl_default_distro` / `wsl_home` - WSL bridge
-
-### Network (`src-tauri/src/modules/net.rs`)
-
-- `ai_http_stream` / `ai_http_cancel` / `ai_http_ack` - AI HTTP proxy with SSRF guard
-- `lm_ping` - local-model ping
-
-### Secrets (`src-tauri/src/modules/secrets.rs`)
-
-- `secrets_get` / `secrets_set` / `secrets_delete` / `secrets_get_all` - OS keychain access, service `rex`
-
-### Agent hooks (`src-tauri/src/modules/agent.rs`)
-
-- `agent_enable_hooks` / `agent_hooks_status` - install/status terminal coding-agent hooks (Claude Code, Codex, Gemini CLI)
-
-### History (`src-tauri/src/modules/history/`)
-
-- `history_suggest` / `history_commands` / `history_record` / `history_list` - shell history integration
 
 ### Settings window
 

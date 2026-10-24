@@ -143,7 +143,7 @@ terminals.
 
 ## Other per-chunk costs removed
 
-- `agent_detect` and `da_filter` scan with `memchr` and copy runs with
+- `da_filter` scans with `memchr` and copies runs with
   `extend_from_slice` instead of per-byte pushes.
 - The reader checks `closed` with an atomic flag instead of locking the queue
   mutex twice per read.

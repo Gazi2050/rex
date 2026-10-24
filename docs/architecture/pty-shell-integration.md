@@ -115,10 +115,6 @@ On macOS and Linux, `Drop for Session` calls `killer.kill()`. Dev `Ctrl-C` of `c
 
 PowerShell / PSReadLine sends a cursor-position query (`ESC[6n`) at startup and blocks until it gets an answer. The `DaFilter` (`da_filter.rs`) intercepts that query and replies on the PTY input so the shell does not hang.
 
-### Agent detection
-
-The reader thread runs an `AgentDetector` (`agent_detect.rs`) over the byte stream. It is armed by `OSC 133;C;<cmd>` or by a self-armed `OSC 777` marker and emits `rex:agent-signal` transitions (`started`, `working`, `attention`, `finished`, `exited`). Detection is driven only by OSC sequences, never by raw output, so a repainting TUI never flaps.
-
 ### Enter key
 
 Terminal input sends `\r` (CR), not `\n` (LF). PowerShell on Windows requires CR.

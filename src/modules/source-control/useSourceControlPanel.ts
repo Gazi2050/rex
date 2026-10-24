@@ -296,11 +296,16 @@ export function useSourceControlPanel(
     | null
   >(null);
   const selectedRef = useRef<DiffSelection | null>(null);
+  const repoRef = useRef<GitRepoInfo | null>(null);
   const reconcileTimerRef = useRef(0);
 
   useEffect(() => {
     selectedRef.current = selected;
   }, [selected]);
+
+  useEffect(() => {
+    repoRef.current = repo;
+  }, [repo]);
 
   const stagedEntries = useMemo(
     () =>
@@ -698,14 +703,19 @@ export function useSourceControlPanel(
 
   const generateCommitMessage = useCallback(async () => {
     if (!repo || generatingMessage || stagedEntries.length === 0) return;
+    const repoRoot = repo.repoRoot;
     setGeneratingMessage(true);
     setActionError(null);
     setActionMessage(null);
     try {
-      const message = await native.gitAiCommitMessage(repo.repoRoot);
+      const message = await native.gitAiCommitMessage(repoRoot);
+      // The panel may have switched repos while the request was in flight;
+      // the result then belongs to a repo the user is no longer looking at.
+      if (repoRef.current?.repoRoot !== repoRoot) return;
       setCommitMessage(message);
       setActionMessage("Generated commit message");
     } catch (error) {
+      if (repoRef.current?.repoRoot !== repoRoot) return;
       setActionError(normalizeError(error));
     } finally {
       setGeneratingMessage(false);

@@ -230,7 +230,7 @@ Exceeding this drain bound reports a reader failure and exit status -1. After sh
 30 seconds without acknowledgment progress closes a stalled queue with a logged delivery failure
 and exit status -1. The deadline is armed before ConPTY close and thread joins; it does not run
 during live-shell backpressure. Close wakes blocked queue workers and the Unix reader; Windows
-keeps draining the pipe while ConPTY closes. Per-read costs stay low: the agent and DA filters
+keeps draining the pipe while ConPTY closes. Per-read costs stay low: the DA filter
 scan with `memchr` and copy runs, the reader checks an atomic `closed` flag and reuses its
 buffers, input goes through one bounded queue to a per-session writer thread, worker threads use
 128-256 KiB stacks, and `pty_has_foreground_process` lists children with `proc_listchildpids` or

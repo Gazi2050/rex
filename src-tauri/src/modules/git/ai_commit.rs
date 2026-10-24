@@ -1,6 +1,9 @@
 //! AI commit message generation through gli's keyless diny.run endpoint.
 //! `reference/gli/internal/api/ai.go` is the wire-shape source of truth:
-//! the payload, response, and conventional-commit enforcement mirror it.
+//! the payload and response mirror it exactly. Conventional-commit
+//! enforcement keeps gli's type list and `chore:` fallback but is a little
+//! looser on the first line (no `:\s.+` regex) and preserves body lines
+//! instead of dropping them when re-prefixing.
 
 use std::time::Duration;
 
