@@ -83,12 +83,12 @@ Latest installers are on the [Releases](https://github.com/Gazi2050/rex/releases
 
 - Default shell detection: `pwsh.exe` (PowerShell 7+) -> `powershell.exe` (Windows PowerShell 5.1) -> `cmd.exe`.
 - WSL is a first-class workspace environment, not a wrapped subprocess.
-- "Open in Rex" context-menu entries for folders and drives are installed per-user.
+- "Open in Rex Terminal" context-menu entries for folders and drives are installed per-user.
 
 ### Linux notes
 
+- **Debian / Ubuntu:** install the `.deb` from the [Releases](https://github.com/Gazi2050/rex/releases/latest) page: `sudo apt install ./Rex_Terminal_<version>_amd64.deb` (the package is `rex-terminal`, the launcher shows as **Rex**). It coexists with the unrelated Perl `rex` deployment tool.
 - **NixOS / Nix**: use the official flake - `nix profile install github:Gazi2050/rex` (non-NixOS), or import the flake and add `inputs.rex.packages.${pkgs.system}.rex` to `environment.systemPackages` (NixOS). The `nixosModules.rex` output is also available for a simpler setup.
-- **AppImage:** needs FUSE. Without it: `./Rex_*.AppImage --appimage-extract-and-run`. On Wayland with rendering glitches, try `WEBKIT_DISABLE_DMABUF_RENDERER=1`. Otherwise the `.deb` / `.rpm` packages link against the system GTK stack and tend to be smoother.
 
 ## Build from source
 

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Rex
+Exec=rex-terminal
+Icon=rex-terminal
+Categories=Development;System;TerminalEmulator;
+StartupWMClass=rex-terminal
+Terminal=false

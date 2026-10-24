@@ -64,6 +64,7 @@
     "linux": {
       "deb": {
         "section": "utils",
+        "desktopTemplate": "./deb/rex-terminal.desktop",
         "depends": [
           "libwebkit2gtk-4.1-0",
           "libgtk-3-0"
