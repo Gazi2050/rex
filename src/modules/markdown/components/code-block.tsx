@@ -10,7 +10,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { createContext, memo, useContext, useEffect, useRef, useState } from "react";
 
 import { Shimmer } from "./shimmer";
-import { highlight, isHighlightable, type HighlightedNode } from "./chat-code-lezer";
+import { highlight, isHighlightable, type HighlightedNode } from "./highlighter";
 
 // True while the parent message is still streaming from the model. We hide
 // fenced-code contents during this phase: parsing partial code is wasted
@@ -50,12 +50,12 @@ function normalizeLangLabel(raw: string): string {
   return lower || "text";
 }
 
-export type ChatCodeBlockProps = {
+export type CodeBlockProps = {
   code: string;
   lang: string | null;
 };
 
-export function ChatCodeBlock({ code, lang }: ChatCodeBlockProps) {
+export function CodeBlock({ code, lang }: CodeBlockProps) {
   const streaming = useContext(StreamingCtx);
   const label = normalizeLangLabel(lang ?? "");
 

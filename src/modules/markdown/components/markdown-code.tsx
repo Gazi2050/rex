@@ -2,7 +2,7 @@
 
 import { isValidElement, type ReactNode } from "react";
 
-import { ChatCodeBlock } from "./chat-code";
+import { CodeBlock } from "./code-block";
 
 export function markdownCodeText(children?: ReactNode): string {
   if (children == null || typeof children === "boolean") return "";
@@ -44,5 +44,5 @@ export function MarkdownCode({
   }
 
   const code = markdownCodeText(children).replace(/\n$/, "");
-  return <ChatCodeBlock code={code} lang={match[1] ?? null} />;
+  return <CodeBlock code={code} lang={match[1] ?? null} />;
 }
