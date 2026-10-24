@@ -1,156 +1,140 @@
 <div align="center">
   <img src="../../public/logo.png" width="144" height="144" alt="Rex" />
   <h1>Rex</h1>
-  <p><strong>Легковесная среда разработки с упором на терминал и встроенным ИИ.</strong></p>
-  <p><a href="https://terax.app">Сайт</a> · <a href="https://terax.app/docs">Документация</a> · <a href="https://github.com/crynta/Terax-website">Исходный код сайта</a></p>
 
-  <p>
-    <img src="https://img.shields.io/github/v/release/crynta/terax-ai?label=version&color=blue" alt="версия" />
-    <img src="https://img.shields.io/github/downloads/crynta/terax-ai/total?label=downloads&color=blue" alt="загрузки" />
-    <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey" alt="платформа" />
-    <a href="https://discord.gg/tyveTUyEp7"><img src="https://img.shields.io/badge/Discord-5865F2?logo=discord&logoColor=white" alt="Discord" /></a>
-    <a href="https://www.youtube.com/@crynta"><img src="https://img.shields.io/badge/Youtube-FF0000?logo=youtube&logoColor=white" alt="YouTube" /></a>
-  </p>
+  <p><strong>Легковесный терминал рабочего пространства.</strong></p>
 </div>
 
 <p align="center">
-  <a href="../../README.md">English</a> | <a href="README.zh-CN.md">简体中文</a> | <a href="README.es.md">Español</a> | <a href="README.de.md">Deutsch</a> | <a href="README.fr.md">Français</a> | <a href="README.ja.md">日本語</a> | <a href="README.ko.md">한국어</a> | <a href="README.pt-BR.md">Português</a> | <a href="README.pl.md">Polski</a> | <a href="README.id.md">Bahasa Indonesia</a> | <a href="README.hi.md">हिन्दी</a>
+  <a href="../../README.md">English</a> |
+  <a href="README.zh-CN.md">简体中文</a> |
+  <a href="README.es.md">Español</a> |
+  <a href="README.de.md">Deutsch</a> |
+  <a href="README.fr.md">Français</a> |
+  <a href="README.ja.md">日本語</a> |
+  <a href="README.ko.md">한국어</a> |
+  <a href="README.pt-BR.md">Português</a> |
+  <a href="README.pl.md">Polski</a> |
+  <a href="README.ru.md">Русский</a> |
+  <a href="README.id.md">Bahasa Indonesia</a> |
+  <a href="README.hi.md">हिन्दी</a>
 </p>
 
 ---
 
-Rex представляет собой легковесную среду разработки (ADE) с открытым исходным кодом, ориентированную на терминал и ИИ. Она построена на Tauri 2 + Rust и React 19. В состав входят нативный PTY-бэкенд с WebGL-рендерером, боковая панель агентного ИИ, работающая с вашими ключами или полностью локальными моделями, редактор кода, файловый проводник, управление исходным кодом с графом Git и панель веб-предпросмотра. Около 7-8 МБ на диске. Без телеметрии. Без учётной записи.
+<img src="../../public/preview.webp" alt="Терминал рабочего пространства Rex" width="100%" />
 
-## Снимки экрана
-
-<table>
-  <tr><td align="center"><img src="../web-preview.png" alt="Веб-предпросмотр" /><br/><sub>Предпросмотр локальных серверов разработки</sub></td><td align="center"><img src="../ai-workflow.png" alt="Окно ИИ" /><br/><sub>Рабочий процесс агентного ИИ с различиями правок в редакторе</sub></td></tr>
-  <tr><td align="center"><img src="../themes.png" alt="Темы и фон" style="margin-top: 12px;"/><br/><sub>Пользовательские темы, пресеты и фоновые изображения</sub></td><td align="center"><img src="../source-control.png" alt="Управление кодом и граф Git" style="margin-top: 12px;"/><br/><sub>Панель управления кодом с графом Git в истории</sub></td></tr>
-  <tr><td colspan="2" align="center"><img src="../terminal.png" alt="Терминал" style="border-radius: 4px; margin-top: 12px;" /><br/><sub>Блочный WebGL-терминал с панелью ввода как в редакторе</sub></td></tr>
-</table>
+Rex - это легковесный терминал рабочего пространства с открытым исходным кодом, построенный на Tauri 2 + Rust и React 19. Терминал с ускорением на GPU и редактор кода в одном быстром нативном приложении, со встроенными проводником файлов, контролем версий с git-графом и панелью веб-предпросмотра. Около 7-8 МБ на диске. Без телеметрии. Без аккаунта.
 
 ## Возможности
 
 ### Терминал
 
-- xterm.js с WebGL-рендерером, несколькими вкладками и фоновой передачей данных
-- Блочный терминал с ускорением GPU и вводом команд как в редакторе
+- Рендеринг с ускорением на GPU: WebGPU по умолчанию, WebGL как резерв (модель терминала libghostty-vt)
+- Несколько вкладок с фоновой трансляцией, горизонтальное и вертикальное разделение
+- Блочный ввод команд с интеграцией оболочки (OSC 7 / OSC 133)
 - Нативный PTY-бэкенд через `portable-pty` (zsh, bash, pwsh, fish, cmd)
-- Горизонтальное и вертикальное разделение панелей
-- Встроенный поиск, распознавание ссылок и True Color
-- Перетаскивание файлов из проводника или с рабочего стола как безопасно заключённых в кавычки путей
-- Отдельная среда для каждой вкладки в Windows (Local или установленный дистрибутив WSL)
-- Spaces восстанавливает вкладки, рабочие каталоги и раскладку панелей между запусками
+- Встроенный поиск, обнаружение ссылок, true-color
+- Перетащите файлы из проводника или рабочего стола в терминал - путь будет безопасно закавычен для оболочки
+- Приватные вкладки
+- Окружения рабочего пространства на уровне вкладок в Windows (Локальное или любой установленный дистрибутив WSL)
+- Spaces восстанавливают вкладки, рабочие каталоги и схемы разделения между запусками
+- Встроенный CLI `rex`: `rex open <file> --line <n>` открывает файлы из любой оболочки
 
 ### Редактор кода
 
-- CodeMirror 6 с поддержкой популярных языков, включая TS/JS, Rust, Python, Go, C/C++, Java, HTML/CSS, JSON и Markdown
-- Встроенное автодополнение ИИ с поддержкой локальных моделей
-- Различия правок ИИ с принятием или отклонением по отдельным блокам
-- Опциональные языковые серверы с диагностикой, навигацией, дополнением, форматированием и пользовательскими серверами
-- Рендеринг Markdown и просмотр изображений, видео, аудио и PDF
+- CodeMirror 6 (TS/JS, Rust, Python, Go, C/C++, Java, HTML/CSS, JSON, Markdown и другие)
+- Отрендеренный Markdown плюс просмотр изображений, видео, аудио и PDF
+- Опциональная поддержка серверов языка: диагностика, навигация, дополнение, форматирование и свои серверы
+- Форматирование при сохранении (biome, prettier, ruff, rustfmt, gofmt, clang-format, shfmt, zig или своя команда)
 - Режим Vim
-- Встроенные темы Kanagawa, Catppuccin, Rosé Pine, Everforest, Dracula, Solarized, Nord, Tokyo Night, GitHub, Xcode и другие
+- Встроенные темы редактора: Kanagawa, Catppuccin, Rosé Pine, Everforest, Dracula, Solarized, Nord, Tokyo Night, GitHub и Xcode
 
-### Управление исходным кодом
+### Контроль версий
 
-- Индексация и снятие индексации блоков, commit (Cmd+Enter / Ctrl+Enter) и push с учётом upstream
-- Отображение веток, включая состояние detached HEAD
-- История Git с настоящим графом коммитов и дорожками слияний и веток
-- Поиск и фильтрация коммитов с переходом на удалённую страницу
+- Стадия / снятие со стадии ханков, коммит (Cmd+Enter / Ctrl+Enter), push с учётом upstream
+- Отображение и переключение веток, включая состояние detached HEAD
+- Панель истории git с настоящим графом коммитов (отрисовка дорожек для merge и веток)
+- Поиск и фильтрация коммитов, переход к странице удалённого коммита по клику
+- Генерация сообщения коммита через ИИ в один клик (отправляет застейдженный дифф и имя репозитория на бесплатный эндпоинт без ключа)
 
-### Файловый проводник
+### Проводник файлов
 
-- Тема значков Catppuccin
-- Нечёткий поиск, навигация с клавиатуры, переименование на месте и контекстные действия
+- Тема иконок Catppuccin
+- Нечёткий поиск, навигация с клавиатуры, переименование на месте, контекстные действия
 - Обновление в реальном времени при изменении файлов на диске
-- Прикрепление файлов и выделений прямо к панели ИИ
 
 ### Веб-предпросмотр
 
-- Автоматически находит локальные серверы и открывает их во вкладке предпросмотра
-- Показывает внешние URL через нативный дочерний WebView
+- Автоматически обнаруживает локальные dev-серверы и открывает их во вкладке предпросмотра
+- Предпросмотр внешних URL через нативную дочернюю webview
 
 ### Темы и настройка
 
-- Создание собственных тем в приложении и переключение между пресетами и своими темами
-- Обмен темами и импорт из сообщества
-- Фоновые изображения с регулируемой прозрачностью и размытием
-- Тема редактора не зависит от темы приложения
-
-### ИИ
-
-- **Провайдеры с собственным ключом:** OpenAI, Anthropic, Google (Gemini), Groq, xAI (Grok), Cerebras, OpenRouter, DeepSeek, Mistral и любой OpenAI-совместимый endpoint
-- **Локально / офлайн:** LM Studio, MLX, Ollama
-- **Агентный процесс:** планы, субагенты, память проекта через `REX.md`, чтение / запись / правка / множественная правка / grep / glob, bash с подтверждением и фоновые процессы
-- **Оркестрация агентов программирования:** запуск Claude Code в терминале, просмотр его вывода и отправка последующих задач через инструменты с подтверждением
-- **Поле ввода:** фрагменты промптов через `#handle`, файлы через `@path`, голосовой ввод и вложения из проводника или выделения
-- **Пользовательские агенты** со своим системным промптом и набором инструментов
-- **Режим планирования**, который создаёт план и просит подтверждение перед выполнением
+- Пользовательские темы создаются в приложении, переключайтесь между встроенными пресетами и своими
+- Создавайте свои темы, делитесь ими или импортируйте из сообщества
+- Фоновые изображения с настраиваемой прозрачностью и размытием
+- Тема редактора независима от темы приложения
 
 ## Установка
 
-Последние установщики находятся на странице [Releases](https://github.com/crynta/terax-ai/releases/latest). Rex автоматически обновляется оттуда.
+Последние установщики на странице [Releases](https://github.com/crynta/terax-ai/releases/latest). Rex обновляется автоматически оттуда.
 
 ### Примечания для Windows
 
-- Определение shell по умолчанию: `pwsh.exe` (PowerShell 7+) -> `powershell.exe` (Windows PowerShell 5.1) -> `cmd.exe`.
-- WSL является полноценной рабочей средой, а не обёрнутым подпроцессом.
+- Определение оболочки по умолчанию: `pwsh.exe` (PowerShell 7+) -> `powershell.exe` (Windows PowerShell 5.1) -> `cmd.exe`.
+- WSL - это полноценное окружение рабочего пространства, а не обёрнутый подпроцесс.
+- Пункты контекстного меню «Open in Rex» для папок и дисков устанавливаются на уровне пользователя.
 
 ### Примечания для Linux
 
-- **Arch / AUR:** `yay -S terax-bin` или `paru`. Пакет следует за последним выпуском.
-- **NixOS / Nix:** используйте официальный flake. Вне NixOS выполните `nix profile install github:crynta/terax-ai`. В NixOS импортируйте flake и добавьте `inputs.rex.packages.${pkgs.system}.rex` в `environment.systemPackages`. Для более простой настройки доступен `nixosModules.rex`.
-- **AppImage:** требует FUSE. Без него выполните `./Terax_*.AppImage --appimage-extract-and-run`. При проблемах рендеринга в Wayland попробуйте `WEBKIT_DISABLE_DMABUF_RENDERER=1`. Пакеты `.deb` / `.rpm` используют системный стек GTK и обычно работают плавнее.
+- **Arch / AUR:** `yay -S terax-bin` (или `paru` и т.п.). Следит за последним релизом.
+- **NixOS / Nix**: используйте официальный flake - `nix profile install github:crynta/terax-ai` (не NixOS), либо импортируйте flake и добавьте `inputs.rex.packages.${pkgs.system}.rex` в `environment.systemPackages` (NixOS). Для более простой настройки доступен также выход `nixosModules.rex`.
+- **AppImage:** нужен FUSE. Без него: `./Terax_*.AppImage --appimage-extract-and-run`. При артефактах рендеринга под Wayland попробуйте `WEBKIT_DISABLE_DMABUF_RENDERER=1`. Пакеты `.deb` / `.rpm` линкуются с системным стеком GTK и обычно работают стабильнее.
 
-## Настройка ИИ
+## Сборка из исходников
 
-1. Откройте **Настройки -> ИИ**.
-2. Выберите провайдера и вставьте ключ API. Для локального инференса укажите endpoint LM Studio / MLX / Ollama.
-3. Ключи записываются в системное хранилище через `keyring`. Они никогда не сохраняются на диск или в localStorage.
-
-## Сборка из исходного кода
-
-**Требования**
-
+**Предварительные требования**
 - Rust (stable), https://rustup.rs
 - Node 22+ и [pnpm](https://pnpm.io)
 - Требования Tauri для вашей платформы, https://tauri.app/start/prerequisites/
 
 **Запуск**
-
 ```bash
 pnpm install
 pnpm tauri dev          # разработка
-pnpm tauri build        # производственный пакет
+pnpm tauri build        # продакшен-сборка
 ```
 
 **Проверки**
-
 ```bash
 pnpm lint
 pnpm check-types
 pnpm test
-cd src-tauri && cargo clippy --all-targets --locked -- -D warnings   # Rust lint как в CI
-cd src-tauri && cargo nextest run --locked                           # или cargo test --locked
+cd src-tauri && cargo clippy --all-targets --locked -- -D warnings   # Rust lint (как в CI)
+cd src-tauri && cargo nextest run --locked                           # или: cargo test --locked
 ```
 
-## Стек технологий
+## Технологический стек
 
-Tauri 2, Rust, `portable-pty`, React 19, TypeScript, Vite, xterm.js, CodeMirror 6, Vercel AI SDK v6, Tailwind v4, shadcn/ui и Zustand.
+Tauri 2, Rust, `portable-pty`, React 19, TypeScript, Vite, libghostty-vt (Ghostty), CodeMirror 6, Tailwind v4, Zustand.
 
 ## Участие в разработке
 
-Issues и PR приветствуются. Сообщайте о проблемах, предлагайте возможности или отправляйте pull request. Подробности находятся в [CONTRIBUTING.md](../../CONTRIBUTING.md) и [документации по архитектуре](../README.md).
+Issues и PR приветствуются! Открывайте issues, предлагайте функции или присылайте pull request'ы. Подробности в [CONTRIBUTING.md](../../CONTRIBUTING.md) и [документации по архитектуре](../README.md).
+
+## Благодарности
+
+Rex - это форк [Terax](https://github.com/crynta/terax-ai), созданного и поддерживаемого [@crynta](https://github.com/crynta). Все заслуги за оригинальный проект принадлежат Crynta.
 
 ## Подпись кода
 
 <a href="https://signpath.org"><img src="https://avatars.githubusercontent.com/u/34448643?s=200&v=4" width="80" alt="SignPath" align="left" /></a>
 
-Сборки Windows подписываются бесплатным сертификатом от [SignPath.io](https://signpath.io), выпущенным [SignPath Foundation](https://signpath.org).
+Сборки для Windows подписываются бесплатным сертификатом подписи кода от [SignPath.io](https://signpath.org), сертификат предоставлен [SignPath Foundation](https://signpath.org).
 
 <br clear="left" />
 
 ## Лицензия
 
-Rex распространяется по лицензии Apache-2.0. Информацию о зависимостях см. в [Apache License 2.0](../../LICENSE).
+Rex распространяется по лицензии Apache-2.0. Подробнее о наших зависимостях см. [Apache License 2.0](../../LICENSE).

@@ -2,27 +2,14 @@
   <img src="../../public/logo.png" width="144" height="144" alt="Rex" />
   <h1>Rex</h1>
 
-  <p><strong>Leichtgewichtiger, terminalorientierter und KI-nativer Entwicklungsarbeitsbereich.</strong></p>
-
-  <p>
-    <a href="https://terax.app">Website</a> ·
-    <a href="https://terax.app/docs">Dokumentation</a> ·
-    <a href="https://github.com/crynta/Terax-website">Quellcode der Website</a>
-  </p>
-
-  <p>
-    <img src="https://img.shields.io/github/v/release/crynta/terax-ai?label=version&color=blue" alt="Version" />
-    <img src="https://img.shields.io/github/downloads/crynta/terax-ai/total?label=downloads&color=blue" alt="Downloads" />
-    <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey" alt="Plattform" />
-    <a href="https://discord.gg/tyveTUyEp7"><img src="https://img.shields.io/badge/Discord-5865F2?logo=discord&logoColor=white" alt="Discord" /></a>
-    <a href="https://www.youtube.com/@crynta"><img src="https://img.shields.io/badge/Youtube-FF0000?logo=youtube&logoColor=white" alt="YouTube" /></a>
-  </p>
+  <p><strong>Das leichtgewichtige Workspace-Terminal.</strong></p>
 </div>
 
 <p align="center">
   <a href="../../README.md">English</a> |
   <a href="README.zh-CN.md">简体中文</a> |
   <a href="README.es.md">Español</a> |
+  <a href="README.de.md">Deutsch</a> |
   <a href="README.fr.md">Français</a> |
   <a href="README.ja.md">日本語</a> |
   <a href="README.ko.md">한국어</a> |
@@ -35,146 +22,119 @@
 
 ---
 
-Rex ist eine leichtgewichtige, quelloffene, terminalorientierte und KI-native Entwicklungsumgebung (ADE), die auf Tauri 2 + Rust und React 19 basiert. Sie bietet ein natives PTY-Backend mit WebGL-Renderer, eine agentische KI-Seitenleiste für eigene Schlüssel oder vollständig lokale Modelle sowie einen Code-Editor, Datei-Explorer, Quellcodeverwaltung mit Git-Graph und eine integrierte Webvorschau. Etwa 7-8 MB auf der Festplatte. Keine Telemetrie. Kein Konto.
+<img src="../../public/preview.webp" alt="Rex Workspace-Terminal" width="100%" />
 
-## Screenshots
-
-<table>
-  <tr>
-    <td align="center"><img src="../web-preview.png" alt="Webvorschau" /><br/><sub>Webvorschau lokaler Entwicklungsserver</sub></td>
-    <td align="center"><img src="../ai-workflow.png" alt="KI-Fenster" /><br/><sub>Agentischer KI-Workflow mit Bearbeitungs-Diffs im Code-Editor</sub></td>
-  </tr>
-  <tr>
-    <td align="center"><img src="../themes.png" alt="Themes und Hintergrundbild" style="margin-top: 12px;"/><br/><sub>Eigene Themes, Voreinstellungen und Hintergrundbilder</sub></td>
-    <td align="center"><img src="../source-control.png" alt="Quellcodeverwaltung und Git-Graph" style="margin-top: 12px;"/><br/><sub>Quellcodeverwaltung mit Git-Graph im Verlauf</sub></td>
-  </tr>
-  <tr>
-    <td colspan="2" align="center"><img src="../terminal.png" alt="Terminal" style="border-radius: 4px; margin-top: 12px;" /><br/><sub>Blockbasiertes WebGL-Terminal mit editorähnlichem Eingabebereich</sub></td>
-  </tr>
-</table>
+Rex ist ein leichtgewichtiges, quelloffenes Workspace-Terminal, gebaut mit Tauri 2 + Rust und React 19. Ein GPU-beschleunigtes Terminal und ein Code-Editor in einer schnellen nativen App, mit Datei-Explorer, Quellcodeverwaltung mit Git-Graph und einem Web-Preview-Bereich. Etwa 7-8 MB auf der Festplatte. Keine Telemetrie. Kein Konto.
 
 ## Funktionen
 
 ### Terminal
 
-- xterm.js mit WebGL-Renderer, mehreren Tabs und Hintergrund-Streaming
-- GPU-beschleunigtes blockbasiertes Terminal mit editorähnlicher Befehlseingabe
-- Natives PTY-Backend über `portable-pty` (zsh, bash, pwsh, fish, cmd)
-- Horizontal und vertikal geteilte Bereiche
-- Integrierte Suche, Linkerkennung und True Color
-- Dateien aus Explorer oder Desktop als Shell-sicher quotierte Pfade in ein Terminal ziehen
-- Arbeitsumgebungen pro Tab unter Windows (Lokal oder jede installierte WSL-Distribution)
-- Spaces stellt Tabs, Arbeitsverzeichnisse und geteilte Layouts nach einem Neustart wieder her
+- GPU-beschleunigtes Rendering: standardmäßig WebGPU, WebGL als Fallback (libghostty-vt-Terminalmodell)
+- Mehrere Tabs mit Hintergrund-Streaming, horizontale und vertikale Teilung
+- Blockbasierter Befehlseingabe mit Shell-Integration (OSC 7 / OSC 133)
+- natives PTY-Backend über `portable-pty` (zsh, bash, pwsh, fish, cmd)
+- Inline-Suche, Link-Erkennung, True Color
+- Dateien aus dem Explorer oder Desktop per Drag-and-Drop ins Terminal ziehen, als shell-sichere Pfade in Anführungszeichen
+- Private Tabs
+- Pro-Tab-Arbeitsumgebungen unter Windows (Lokal oder jede installierte WSL-Distribution)
+- Spaces stellen Tabs, Arbeitsverzeichnisse und Split-Layouts über Neustarts hinweg wieder her
+- Gebündelte `rex`-CLI: `rex open <file> --line <n>` öffnet Dateien aus jeder Shell
 
 ### Code-Editor
 
-- CodeMirror 6 (unterstützt alle verbreiteten Sprachen wie TS/JS, Rust, Python, Go, C/C++, Java, HTML/CSS, JSON, Markdown usw.)
-- Integrierte KI-Vervollständigung mit Unterstützung lokaler Modelle
-- KI-Bearbeitungs-Diffs, abschnittsweise annehmbar oder ablehnbar
-- Optionale Language-Server-Unterstützung mit Diagnosen, Navigation, Vervollständigung, Formatierung und eigenen Servern
-- Gerendertes Markdown sowie Anzeige von Bildern, Videos, Audio und PDF
+- CodeMirror 6 (TS/JS, Rust, Python, Go, C/C++, Java, HTML/CSS, JSON, Markdown und mehr)
+- Gerendertes Markdown plus Anzeige von Bildern, Videos, Audio und PDF
+- Opt-in-Sprachserverunterstützung mit Diagnose, Navigation, Vervollständigung, Formatierung und eigenen Servern
+- Formatieren beim Speichern (biome, prettier, ruff, rustfmt, gofmt, clang-format, shfmt, zig oder ein eigener Befehl)
 - Vim-Modus
-- Integrierte Editor-Themes wie Kanagawa, Catppuccin, Rosé Pine, Everforest, Dracula, Solarized, Nord, Tokyo Night, GitHub und Xcode
+- Eingebaute Editor-Themes: Kanagawa, Catppuccin, Rosé Pine, Everforest, Dracula, Solarized, Nord, Tokyo Night, GitHub und Xcode
 
 ### Quellcodeverwaltung
 
-- Abschnitte stagen oder unstagen, committen (Cmd+Enter / Ctrl+Enter) und mit Upstream-Erkennung pushen
-- Branch-Anzeige einschließlich Detached-HEAD-Zustand
-- Git-Verlauf mit echtem Commit-Graphen und Spuren für Merges und Branches
-- Commits suchen und filtern sowie die Remote-Commit-Seite öffnen
+- Stagen / Unstagen von Hunks, Committen (Cmd+Enter / Ctrl+Enter), Push mit Upstream-Erkennung
+- Branch-Anzeige und -Wechsel, einschließlich Detached-HEAD-Zustand
+- Git-Historie mit echtem Commit-Graphen (Lane-Rendering für Merges und Branches)
+- Commit-Suche und -Filter, Klick zur Remote-Commit-Seite
+- KI-Commit-Message auf einen Klick (sendet den gestagten Diff und den Repo-Namen an einen kostenlosen Endpoint ohne Schlüssel)
 
 ### Datei-Explorer
 
 - Catppuccin-Icon-Theme
-- Unscharfe Suche, Tastaturnavigation, direktes Umbenennen und Kontextaktionen
-- Live-Aktualisierung bei Dateiänderungen auf der Festplatte
-- Dateien und Auswahl direkt an die KI-Seitenleiste anhängen
+- Fuzzy-Suche, Tastaturnavigation, Inline-Umbenennen, Kontextaktionen
+- Live-Updates, wenn sich Dateien auf der Festplatte ändern
 
-### Webvorschau
+### Web-Preview
 
-- Erkennt lokale Entwicklungsserver automatisch und öffnet sie in einem Vorschau-Tab
-- Vorschau externer URLs über eine native untergeordnete Webview
+- Erkennt lokale Dev-Server automatisch und öffnet sie in einem Preview-Tab
+- Vorschau externer URLs über eine native Child-Webview
 
 ### Themes und Anpassung
 
-- Eigene Themes in der App erstellen und zwischen integrierten Vorgaben und eigenen Themes wechseln
-- Themes teilen oder aus der Community importieren
+- Eigene Themes direkt in der App erstellen, zwischen mitgelieferten Presets und deinen eigenen wechseln
+- Eigene Themes erstellen, teilen oder aus der Community importieren
 - Hintergrundbilder mit einstellbarer Deckkraft und Unschärfe
 - Das Editor-Theme ist unabhängig vom App-Theme
 
-### KI
-
-- **Anbieter mit eigenem Schlüssel:** OpenAI, Anthropic, Google (Gemini), Groq, xAI (Grok), Cerebras, OpenRouter, DeepSeek, Mistral sowie jeder OpenAI-kompatible Endpunkt
-- **Lokal / offline:** LM Studio, MLX, Ollama
-- **Agentischer Workflow:** Pläne, Sub-Agenten, Projektgedächtnis über `REX.md`, Lesen / Schreiben / Bearbeiten / Mehrfachbearbeitung / grep / glob, Bash mit Freigabe und Hintergrundprozesse
-- **Orchestrierung von Coding-Agenten:** Claude Code in einem Terminal starten, Ausgabe prüfen und Folgeaufgaben über freigabepflichtige Tools senden
-- **Composer:** Prompt-Snippets über `#handle`, Dateien über `@path`, Spracheingabe und Anhängen aus Explorer oder Auswahl
-- **Eigene Agenten** mit eigenem System-Prompt und Tool-Teilsatz
-- **Planungsmodus**, der vor der Ausführung einen Plan erstellt und bestätigen lässt
-
 ## Installation
 
-Die neuesten Installationspakete stehen auf der Seite [Releases](https://github.com/crynta/terax-ai/releases/latest). Rex aktualisiert sich von dort automatisch.
+Die neuesten Installer findest du auf der [Releases](https://github.com/crynta/terax-ai/releases/latest)-Seite. Rex aktualisiert sich von dort automatisch.
 
-### Hinweise für Windows
+### Windows-Hinweise
 
-- Standardmäßige Shell-Erkennung: `pwsh.exe` (PowerShell 7+) -> `powershell.exe` (Windows PowerShell 5.1) -> `cmd.exe`.
-- WSL ist eine vollwertige Arbeitsumgebung und kein umschlossener Unterprozess.
+- Standard-Shell-Erkennung: `pwsh.exe` (PowerShell 7+) -> `powershell.exe` (Windows PowerShell 5.1) -> `cmd.exe`.
+- WSL ist eine erstklassige Arbeitsumgebung, kein gewickelter Subprozess.
+- "Open in Rex"-Kontextmenüeinträge für Ordner und Laufwerke werden pro Benutzer installiert.
 
-### Hinweise für Linux
+### Linux-Hinweise
 
-- **Arch / AUR:** `yay -S terax-bin` (oder `paru` usw.). Folgt der neuesten Version.
-- **NixOS / Nix:** Nutze den offiziellen Flake: `nix profile install github:crynta/terax-ai` außerhalb von NixOS. Unter NixOS importierst du den Flake und fügst `inputs.rex.packages.${pkgs.system}.rex` zu `environment.systemPackages` hinzu. Für eine einfachere Einrichtung ist auch `nixosModules.rex` verfügbar.
-- **AppImage:** Benötigt FUSE. Ohne FUSE: `./Terax_*.AppImage --appimage-extract-and-run`. Bei Darstellungsfehlern unter Wayland hilft möglicherweise `WEBKIT_DISABLE_DMABUF_RENDERER=1`. Die `.deb`- / `.rpm`-Pakete binden stattdessen den GTK-Stack des Systems ein und laufen meist flüssiger.
-
-## KI konfigurieren
-
-1. Öffne **Einstellungen -> KI**.
-2. Wähle einen Anbieter und füge deinen API-Schlüssel ein. Für lokale Inferenz verweist du Rex auf deinen LM Studio- / MLX- / Ollama-Endpunkt.
-3. Schlüssel werden über `keyring` im Schlüsselbund des Betriebssystems gespeichert. Sie werden niemals auf die Festplatte oder in localStorage geschrieben.
+- **Arch / AUR:** `yay -S terax-bin` (oder `paru` etc.). Folgt der neuesten Version.
+- **NixOS / Nix**: benutze das offizielle Flake - `nix profile install github:crynta/terax-ai` (nicht NixOS), oder importiere das Flake und füge `inputs.rex.packages.${pkgs.system}.rex` zu `environment.systemPackages` hinzu (NixOS). Der `nixosModules.rex`-Output ist für eine einfachere Einrichtung ebenfalls verfügbar.
+- **AppImage:** braucht FUSE. Ohne: `./Terax_*.AppImage --appimage-extract-and-run`. Bei Rendering-Problemen unter Wayland: `WEBKIT_DISABLE_DMABUF_RENDERER=1`. Die `.deb`-/`.rpm`-Pakete linken gegen den System-GTK-Stack und laufen meist runder.
 
 ## Aus dem Quellcode bauen
 
 **Voraussetzungen**
-
 - Rust (stable), https://rustup.rs
 - Node 22+ und [pnpm](https://pnpm.io)
 - Tauri-Voraussetzungen für deine Plattform, https://tauri.app/start/prerequisites/
 
 **Ausführen**
-
 ```bash
 pnpm install
 pnpm tauri dev          # Entwicklung
-pnpm tauri build        # Produktionspaket
+pnpm tauri build        # Produktions-Bundle
 ```
 
 **Prüfungen**
-
 ```bash
 pnpm lint
 pnpm check-types
 pnpm test
-cd src-tauri && cargo clippy --all-targets --locked -- -D warnings   # Rust-Lint wie in CI
+cd src-tauri && cargo clippy --all-targets --locked -- -D warnings   # Rust-Lint (wie in CI)
 cd src-tauri && cargo nextest run --locked                           # oder: cargo test --locked
 ```
 
-## Technologie-Stack
+## Tech-Stack
 
-Tauri 2, Rust, `portable-pty`, React 19, TypeScript, Vite, xterm.js, CodeMirror 6, Vercel AI SDK v6, Tailwind v4, shadcn/ui und Zustand.
+Tauri 2, Rust, `portable-pty`, React 19, TypeScript, Vite, libghostty-vt (Ghostty), CodeMirror 6, Tailwind v4, Zustand.
 
 ## Mitwirken
 
-Issues und PRs sind willkommen. Melde Probleme, schlage Funktionen vor oder reiche Pull Requests ein. Weitere Informationen findest du in [CONTRIBUTING.md](../../CONTRIBUTING.md) und der [Architekturdokumentation](../README.md).
+Issues und PRs sind willkommen! Öffne Issues, schlage Funktionen vor oder reiche Pull Requests ein. Siehe [CONTRIBUTING.md](../../CONTRIBUTING.md) und die [Architektur-Dokumentation](../README.md).
 
-## Codesignierung
+## Danksagung
+
+Rex ist ein Fork von [Terax](https://github.com/crynta/terax-ai), erstellt und gepflegt von [@crynta](https://github.com/crynta). Alle Anerkennung für das Originalprojekt gebührt Crynta.
+
+## Code-Signierung
 
 <a href="https://signpath.org"><img src="https://avatars.githubusercontent.com/u/34448643?s=200&v=4" width="80" alt="SignPath" align="left" /></a>
 
-Windows-Builds werden mit einem kostenlosen Codesignaturzertifikat von [SignPath.io](https://signpath.io) signiert, das von der [SignPath Foundation](https://signpath.org) ausgestellt wird.
+Windows-Builds werden mit einem kostenlosen Code-Signing-Zertifikat von [SignPath.io](https://signpath.io) signiert, Zertifikat von der [SignPath Foundation](https://signpath.org).
 
 <br clear="left" />
 
 ## Lizenz
 
-Rex steht unter der Apache-2.0-Lizenz. Weitere Informationen zu unseren Abhängigkeiten findest du in der [Apache License 2.0](../../LICENSE).
+Rex ist unter der Apache-2.0-Lizenz lizenziert. Informationen zu unseren Abhängigkeiten findest du unter [Apache License 2.0](../../LICENSE).

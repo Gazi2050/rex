@@ -14,7 +14,7 @@ This applies to everything inside the project: issues, PRs, discussions, commits
 
 ## Enforcement
 
-If you see a violation - or experience one - email **crynta.dev@gmail.com** with subject `[Rex conduct]`. Include links and context.
+If you see a violation - or experience one - open an issue at **[github.com/Gazi2050/rex/issues](https://github.com/Gazi2050/rex/issues)** and tag it `[Rex conduct]`. Include links and context.
 
 Maintainers may, at their discretion:
 

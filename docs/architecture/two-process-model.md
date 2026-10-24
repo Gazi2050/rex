@@ -9,7 +9,7 @@ Rex is two processes: the Rust backend (`src-tauri/`) and the webview frontend (
 - **Rust owns all OS access**: PTY, file system, git, shell spawn, workspace authorization.
 - **The webview never touches the FS, processes, or shells directly**. Every host operation goes through an `invoke()` call to a command registered in `src-tauri/src/lib.rs`.
 
-This boundary is the root of the security model. Untrusted input (terminal escape sequences, file content, AI tool results) is parsed and validated in Rust or in carefully scoped frontend code, never executed by the renderer.
+This boundary is the root of the security model. Untrusted input (terminal escape sequences, file content) is parsed and validated in Rust or in carefully scoped frontend code, never executed by the renderer.
 
 ## Adding a new IPC command
 
@@ -17,7 +17,7 @@ This boundary is the root of the security model. Untrusted input (terminal escap
 2. Register it in `src-tauri/src/lib.rs` inside the `tauri::generate_handler![...]` block (`src-tauri/src/lib.rs:191`).
 3. If the command uses a Tauri plugin API (window, clipboard, dialog, etc.), add the plugin permission to `src-tauri/capabilities/default.json`.
 4. Add a typed frontend wrapper in the matching `src/modules/<area>/lib/` directory and call it through Tauri's `invoke()` API.
-5. If the command touches the file system, network, or shell, it must go through the existing guards (`security.ts` deny-list, workspace authorization registry, SSRF guard, AI tool approval).
+5. If the command touches the file system, network, or shell, it must go through the existing guards (workspace authorization registry, validation at the command boundary in Rust).
 
 Custom commands do not need to be listed one-by-one in `default.json`; the capability covers the window. Plugin permissions do.
 
@@ -37,6 +37,7 @@ Long-lived interactive terminal sessions.
 - `pty_close` / `pty_close_all` - destroy one or all sessions
 - `pty_has_foreground_process` / `pty_has_foreground_job` - detect whether a command is running
 - `pty_shell_name` / `pty_list_shells` - shell detection and enumeration
+- `pty_diagnostics` - native queue counters for the release diagnostics overlay
 
 Output streams over the `rex-pty` custom URI scheme (one held `poll` request per window), not through `pty_open`; see `pty-transport-v2.md`.
 
@@ -108,6 +109,11 @@ Three distinct surfaces:
 - get_launch_files - files opened at launch (CLI args or OS Open With), drained on first read
 - `open_settings_window` - open the separate settings webview (optional `tab` deep-link)
 
+### Window presentation and backdrop
+
+- `window_presentation_state` - shared native occlusion/sleep state that drives renderer pausing
+- `window_backdrop_kind` / `window_set_backdrop` - native window backdrop (macOS NSVisualEffectView, Windows Mica)
+
 ### CLI control plane
 
 - `control_frontend_ready` - marks the restored main UI ready for routed CLI actions
@@ -118,7 +124,7 @@ See [CLI control plane](cli-control.md) for the local protocol and packaging mod
 ## Invariants
 
 - The webview must not spawn processes, read files, or make network calls except through the commands above.
-- New commands must be registered in `lib.rs` and guarded at the boundary (workspace auth, deny-list, SSRF, approval flow).
+- New commands must be registered in `lib.rs` and guarded at the boundary (workspace auth, command-level validation in Rust).
 - Plugin permissions must be added to `src-tauri/capabilities/default.json` if the command uses a plugin API.
 
 ## See also

@@ -1,124 +1,105 @@
 <div align="center">
   <img src="../../public/logo.png" width="144" height="144" alt="Rex" />
   <h1>Rex</h1>
-  <p><strong>हल्का, टर्मिनल-केंद्रित और AI-नेटिव डेवलपमेंट वर्कस्पेस।</strong></p>
-  <p><a href="https://terax.app">वेबसाइट</a> · <a href="https://terax.app/docs">दस्तावेज़</a> · <a href="https://github.com/crynta/Terax-website">वेबसाइट का सोर्स कोड</a></p>
 
-  <p>
-    <img src="https://img.shields.io/github/v/release/crynta/terax-ai?label=version&color=blue" alt="संस्करण" />
-    <img src="https://img.shields.io/github/downloads/crynta/terax-ai/total?label=downloads&color=blue" alt="डाउनलोड" />
-    <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey" alt="प्लेटफ़ॉर्म" />
-    <a href="https://discord.gg/tyveTUyEp7"><img src="https://img.shields.io/badge/Discord-5865F2?logo=discord&logoColor=white" alt="Discord" /></a>
-    <a href="https://www.youtube.com/@crynta"><img src="https://img.shields.io/badge/Youtube-FF0000?logo=youtube&logoColor=white" alt="YouTube" /></a>
-  </p>
+  <p><strong>हल्का वर्कस्पेस टर्मिनल।</strong></p>
 </div>
 
 <p align="center">
-  <a href="../../README.md">English</a> | <a href="README.zh-CN.md">简体中文</a> | <a href="README.es.md">Español</a> | <a href="README.de.md">Deutsch</a> | <a href="README.fr.md">Français</a> | <a href="README.ja.md">日本語</a> | <a href="README.ko.md">한국어</a> | <a href="README.pt-BR.md">Português</a> | <a href="README.pl.md">Polski</a> | <a href="README.ru.md">Русский</a> | <a href="README.id.md">Bahasa Indonesia</a>
+  <a href="../../README.md">English</a> |
+  <a href="README.zh-CN.md">简体中文</a> |
+  <a href="README.es.md">Español</a> |
+  <a href="README.de.md">Deutsch</a> |
+  <a href="README.fr.md">Français</a> |
+  <a href="README.ja.md">日本語</a> |
+  <a href="README.ko.md">한국어</a> |
+  <a href="README.pt-BR.md">Português</a> |
+  <a href="README.pl.md">Polski</a> |
+  <a href="README.ru.md">Русский</a> |
+  <a href="README.id.md">Bahasa Indonesia</a> |
+  <a href="README.hi.md">हिन्दी</a>
 </p>
 
 ---
 
-Rex एक हल्का, ओपन-सोर्स, टर्मिनल-केंद्रित और AI-नेटिव डेवलपमेंट एनवायरनमेंट (ADE) है, जिसे Tauri 2 + Rust और React 19 पर बनाया गया है। इसमें WebGL रेंडरर वाला नेटिव PTY बैकएंड, आपकी अपनी कुंजियों या पूरी तरह स्थानीय मॉडल पर चलने वाला एजेंटिक AI साइड पैनल, कोड एडिटर, फ़ाइल एक्सप्लोरर, Git ग्राफ़ के साथ सोर्स कंट्रोल और वेब प्रीव्यू पैनल शामिल हैं। डिस्क पर लगभग 7-8 MB। कोई टेलीमेट्री नहीं। कोई खाता नहीं।
+<img src="../../public/preview.webp" alt="Rex वर्कस्पेस टर्मिनल" width="100%" />
 
-## स्क्रीनशॉट
+Rex एक हल्का, ओपन-सोर्स वर्कस्पेस टर्मिनल है जो Tauri 2 + Rust और React 19 पर बना है। GPU-त्वरित टर्मिनल और कोड एडिटर एक ही तेज़ नेटिव ऐप में, साथ में फ़ाइल एक्सप्लोरर, git ग्राफ सहित सोर्स कंट्रोल और वेब प्रीव्यू पैन भी शामिल है। डिस्क पर लगभग 7-8 MB। कोई टेलीमेट्री नहीं। कोई खाता नहीं।
 
-<table>
-  <tr><td align="center"><img src="../web-preview.png" alt="वेब प्रीव्यू" /><br/><sub>स्थानीय डेवलपमेंट सर्वर का वेब प्रीव्यू</sub></td><td align="center"><img src="../ai-workflow.png" alt="AI विंडो" /><br/><sub>कोड एडिटर में एडिट डिफ़ के साथ एजेंटिक AI वर्कफ़्लो</sub></td></tr>
-  <tr><td align="center"><img src="../themes.png" alt="थीम और बैकग्राउंड" style="margin-top: 12px;"/><br/><sub>कस्टम थीम, प्रीसेट और बैकग्राउंड इमेज</sub></td><td align="center"><img src="../source-control.png" alt="सोर्स कंट्रोल और Git ग्राफ़" style="margin-top: 12px;"/><br/><sub>इतिहास में Git ग्राफ़ वाला सोर्स कंट्रोल पैनल</sub></td></tr>
-  <tr><td colspan="2" align="center"><img src="../terminal.png" alt="टर्मिनल" style="border-radius: 4px; margin-top: 12px;" /><br/><sub>एडिटर जैसे इनपुट पैनल वाला ब्लॉक-आधारित WebGL टर्मिनल</sub></td></tr>
-</table>
-
-## सुविधाएँ
+## फ़ीचर्स
 
 ### टर्मिनल
 
-- WebGL रेंडरर, मल्टी-टैब और बैकग्राउंड स्ट्रीमिंग के साथ xterm.js
-- एडिटर जैसे कमांड इनपुट वाला GPU-त्वरित ब्लॉक-आधारित टर्मिनल
-- `portable-pty` के माध्यम से नेटिव PTY बैकएंड (zsh, bash, pwsh, fish, cmd)
-- क्षैतिज और लंबवत स्प्लिट पैनल
-- इनलाइन खोज, लिंक पहचान और ट्रू कलर
-- एक्सप्लोरर या डेस्कटॉप से फ़ाइलों को शेल-सुरक्षित उद्धृत पाथ के रूप में टर्मिनल में खींचें
-- Windows पर प्रति-टैब वर्कस्पेस एनवायरनमेंट (Local या कोई स्थापित WSL डिस्ट्रो)
-- Spaces अगली बार शुरू होने पर टैब, कार्य निर्देशिका और स्प्लिट लेआउट पुनर्स्थापित करता है
+- GPU-त्वरित रेंडरिंग: डिफ़ॉल्ट रूप से WebGPU, फ़ॉलबैक WebGL (libghostty-vt टर्मिनल मॉडल)
+- बैकग्राउंड स्ट्रीमिंग के साथ मल्टी-टैब, क्षैतिज और लंबवत स्प्लिट
+- शेल इंटीग्रेशन के साथ ब्लॉक-आधारित कमांड इनपुट (OSC 7 / OSC 133)
+- `portable-pty` द्वारा नेटिव PTY बैकएंड (zsh, bash, pwsh, fish, cmd)
+- इनलाइन खोज, लिंक डिटेक्शन, ट्रू-कलर
+- एक्सप्लोरर या डेस्कटॉप से फ़ाइलों को टर्मिनल में ड्रैग करें - शेल-सुरक्षित कोटेड पाथ के रूप में
+- प्राइवेट टैब
+- Windows पर प्रति-टैब वर्कस्पेस वातावरण (लोकल, या कोई भी इंस्टॉल वाला WSL डिस्ट्रो)
+- Spaces लॉन्च के बीच टैब, वर्किंग डायरेक्टरी और स्प्लिट लेआउट पुनर्स्थापित करते हैं
+- बंडल `rex` CLI: `rex open <file> --line <n>` किसी भी शेल से फ़ाइलें खोलता है
 
 ### कोड एडिटर
 
-- CodeMirror 6, जो TS/JS, Rust, Python, Go, C/C++, Java, HTML/CSS, JSON और Markdown जैसी लोकप्रिय भाषाओं का समर्थन करता है
-- स्थानीय मॉडल समर्थन के साथ इनलाइन AI ऑटोकम्प्लीट
-- AI एडिट डिफ़, जिन्हें हर हंक पर स्वीकार या अस्वीकार किया जा सकता है
-- डायग्नोस्टिक्स, नेविगेशन, कम्प्लीशन, फ़ॉर्मेटिंग और कस्टम सर्वर के साथ वैकल्पिक लैंग्वेज सर्वर समर्थन
-- रेंडर्ड Markdown और इमेज, वीडियो, ऑडियो तथा PDF देखना
+- CodeMirror 6 (TS/JS, Rust, Python, Go, C/C++, Java, HTML/CSS, JSON, Markdown आदि)
+- रेंडर किया गया Markdown साथ ही इमेज, वीडियो, ऑडियो और PDF देखना
+- ऑप्ट-इन लैंग्वेज सर्वर समर्थन: डायग्नोस्टिक्स, नेविगेशन, कम्प्लीशन, फ़ॉर्मेटिंग और कस्टम सर्वर
+- सेव पर फ़ॉर्मेट (biome, prettier, ruff, rustfmt, gofmt, clang-format, shfmt, zig, या कस्टम कमांड)
 - Vim मोड
-- Kanagawa, Catppuccin, Rosé Pine, Everforest, Dracula, Solarized, Nord, Tokyo Night, GitHub और Xcode सहित बिल्ट-इन थीम
+- बिल्ट-इन एडिटर थीम: Kanagawa, Catppuccin, Rosé Pine, Everforest, Dracula, Solarized, Nord, Tokyo Night, GitHub और Xcode
 
 ### सोर्स कंट्रोल
 
-- हंक को stage / unstage करें, commit (Cmd+Enter / Ctrl+Enter) करें और upstream की जानकारी के साथ push करें
-- detached HEAD स्थिति सहित ब्रांच प्रदर्शन
-- मर्ज और ब्रांच के लिए लेन वाले वास्तविक commit ग्राफ़ के साथ Git इतिहास
-- commit खोजें और फ़िल्टर करें, फिर remote commit पेज खोलें
+- हंक स्टेज / अनस्टेज, कमिट (Cmd+Enter / Ctrl+Enter), अपस्ट्रीम-अवेयर पुश
+- ब्रांच डिस्प्ले और चेकआउट, detached HEAD स्थिति सहित
+- वास्तविक कमिट ग्राफ वाला git हिस्ट्री पैन (मर्ज और ब्रांच के लिए लेन रेंडरिंग)
+- कमिट खोज और फ़िल्टर, रिमोट कमिट पेज पर क्लिक-थ्रू
+- वन-क्लिक AI कमिट मैसेज जनरेशन (स्टेज किया गया diff और रिपो नाम एक मुफ़्त कीलेस एंडपॉइंट पर भेजता है)
 
 ### फ़ाइल एक्सप्लोरर
 
 - Catppuccin आइकन थीम
-- फ़ज़ी खोज, कीबोर्ड नेविगेशन, इनलाइन नाम बदलना और संदर्भ क्रियाएँ
-- डिस्क पर फ़ाइल बदलने पर लाइव अपडेट
-- फ़ाइलों और चयन को सीधे AI साइड पैनल में संलग्न करें
+- फ़ज़ी खोज, कीबोर्ड नेविगेशन, इनलाइन रीनेम, कॉन्टेक्स्ट एक्शन
+- डिस्क पर फ़ाइलें बदलने पर लाइव अपडेट
 
 ### वेब प्रीव्यू
 
-- स्थानीय डेवलपमेंट सर्वर अपने आप पहचानकर प्रीव्यू टैब में खोलता है
-- नेटिव चाइल्ड WebView के माध्यम से बाहरी URL का प्रीव्यू
+- लोकल देव सर्वर को अपने आप पहचानकर प्रीव्यू टैब में खोलता है
+- नेटिव चाइल्ड वेबव्यू से बाहरी URL प्रीव्यू
 
 ### थीम और कस्टमाइज़ेशन
 
-- ऐप में कस्टम थीम बनाएँ और बिल्ट-इन प्रीसेट तथा अपनी थीम के बीच बदलें
-- थीम साझा करें या समुदाय से आयात करें
-- समायोज्य अपारदर्शिता और ब्लर वाली बैकग्राउंड इमेज
+- ऐप में बनाई गई कस्टम थीम, बिल्ट-इन प्रीसेट और अपनी थीम के बीच स्विच करें
+- अपनी थीम बनाएं, साझा करें या कम्युनिटी से इंपोर्ट करें
+- एडजस्टेबल ओपैसिटी और ब्लर के साथ बैकग्राउंड इमेज
 - एडिटर थीम ऐप थीम से स्वतंत्र है
 
-### AI
+## इंस्टॉल
 
-- **अपनी कुंजी वाले प्रदाता:** OpenAI, Anthropic, Google (Gemini), Groq, xAI (Grok), Cerebras, OpenRouter, DeepSeek, Mistral और कोई भी OpenAI-संगत endpoint
-- **स्थानीय / ऑफ़लाइन:** LM Studio, MLX, Ollama
-- **एजेंटिक वर्कफ़्लो:** योजनाएँ, सब-एजेंट, `REX.md` के माध्यम से प्रोजेक्ट मेमोरी, फ़ाइल पढ़ना / लिखना / एडिट / मल्टी-एडिट / grep / glob, अनुमोदन वाला bash और बैकग्राउंड प्रोसेस
-- **कोडिंग एजेंट ऑर्केस्ट्रेशन:** टर्मिनल में Claude Code शुरू करें, उसका आउटपुट देखें और अनुमोदन वाले टूल से अगला काम भेजें
-- **कम्पोज़र:** `#handle` से प्रॉम्प्ट स्निपेट, `@path` से फ़ाइलें, वॉइस इनपुट और एक्सप्लोरर या चयन से अटैचमेंट
-- अपने सिस्टम प्रॉम्प्ट और टूल सबसेट वाले **कस्टम एजेंट**
-- **प्लान मोड**, जो कार्य से पहले योजना बनाता है और पुष्टि माँगता है
-
-## इंस्टॉल करें
-
-नवीनतम इंस्टॉलर [Releases](https://github.com/crynta/terax-ai/releases/latest) पेज पर हैं। Rex वहीं से अपने आप अपडेट होता है।
+नवीनतम इंस्टॉलर [Releases](https://github.com/crynta/terax-ai/releases/latest) पेज पर हैं। Rex वहाँ से ऑटो-अपडेट होता है।
 
 ### Windows नोट्स
 
-- डिफ़ॉल्ट शेल पहचान: `pwsh.exe` (PowerShell 7+) -> `powershell.exe` (Windows PowerShell 5.1) -> `cmd.exe`।
-- WSL एक पूर्ण वर्कस्पेस एनवायरनमेंट है, केवल लिपटा हुआ सबप्रोसेस नहीं।
+- डिफ़ॉल्ट शेल डिटेक्शन: `pwsh.exe` (PowerShell 7+) -> `powershell.exe` (Windows PowerShell 5.1) -> `cmd.exe`।
+- WSL एक फ़र्स्ट-क्लास वर्कस्पेस वातावरण है, रैप किया हुआ सबप्रोसेस नहीं।
+- फ़ोल्डर और ड्राइव के लिए "Open in Rex" कॉन्टेक्स्ट-मेन्यू एंट्री प्रति उपयोगकर्ता इंस्टॉल होती हैं।
 
 ### Linux नोट्स
 
-- **Arch / AUR:** `yay -S terax-bin` या `paru`। यह नवीनतम रिलीज़ का अनुसरण करता है।
-- **NixOS / Nix:** आधिकारिक flake का उपयोग करें। NixOS के बाहर `nix profile install github:crynta/terax-ai` चलाएँ। NixOS में flake आयात करें और `inputs.rex.packages.${pkgs.system}.rex` को `environment.systemPackages` में जोड़ें। आसान सेटअप के लिए `nixosModules.rex` भी उपलब्ध है।
-- **AppImage:** FUSE आवश्यक है। इसके बिना `./Terax_*.AppImage --appimage-extract-and-run` चलाएँ। Wayland पर रेंडरिंग समस्या हो तो `WEBKIT_DISABLE_DMABUF_RENDERER=1` आज़माएँ। `.deb` / `.rpm` पैकेज सिस्टम GTK स्टैक से जुड़ते हैं और आम तौर पर अधिक सुचारु चलते हैं।
+- **Arch / AUR:** `yay -S terax-bin` (या `paru` आदि)। नवीनतम रिलीज़ को फ़ॉलो करता है।
+- **NixOS / Nix**: आधिकारिक flake इस्तेमाल करें - `nix profile install github:crynta/terax-ai` (गैर-NixOS), या flake इंपोर्ट करके `inputs.rex.packages.${pkgs.system}.rex` को `environment.systemPackages` में जोड़ें (NixOS)। सरल सेटअप के लिए `nixosModules.rex` आउटपुट भी उपलब्ध है।
+- **AppImage:** FUSE चाहिए। बिना: `./Terax_*.AppImage --appimage-extract-and-run`। Wayland पर रेंडरिंग ग्लिच होने पर `WEBKIT_DISABLE_DMABUF_RENDERER=1` आज़माएँ। `.deb` / `.rpm` पैकेज सिस्टम GTK स्टैक से लिंक होते हैं और आमतौर पर बेहतर चलते हैं।
 
-## AI कॉन्फ़िगर करें
+## सोर्स से बिल्ड
 
-1. **सेटिंग्स -> AI** खोलें।
-2. प्रदाता चुनें और API कुंजी पेस्ट करें। स्थानीय इन्फ़रेंस के लिए Rex को LM Studio / MLX / Ollama endpoint पर निर्देशित करें।
-3. कुंजियाँ `keyring` के माध्यम से OS कीचेन में लिखी जाती हैं। वे कभी भी डिस्क या localStorage में नहीं लिखी जातीं।
-
-## सोर्स से बिल्ड करें
-
-**आवश्यकताएँ**
-
+**पूर्वापेक्षाएँ**
 - Rust (stable), https://rustup.rs
 - Node 22+ और [pnpm](https://pnpm.io)
-- आपके प्लेटफ़ॉर्म के लिए Tauri आवश्यकताएँ, https://tauri.app/start/prerequisites/
+- अपने प्लेटफ़ॉर्म के लिए Tauri पूर्वापेक्षाएँ, https://tauri.app/start/prerequisites/
 
-**चलाएँ**
-
+**चलाना**
 ```bash
 pnpm install
 pnpm tauri dev          # डेवलपमेंट
@@ -126,31 +107,34 @@ pnpm tauri build        # प्रोडक्शन बंडल
 ```
 
 **जाँच**
-
 ```bash
 pnpm lint
 pnpm check-types
 pnpm test
-cd src-tauri && cargo clippy --all-targets --locked -- -D warnings   # CI के समान Rust lint
-cd src-tauri && cargo nextest run --locked                           # या cargo test --locked
+cd src-tauri && cargo clippy --all-targets --locked -- -D warnings   # Rust lint (CI जैसा)
+cd src-tauri && cargo nextest run --locked                           # या: cargo test --locked
 ```
 
 ## टेक स्टैक
 
-Tauri 2, Rust, `portable-pty`, React 19, TypeScript, Vite, xterm.js, CodeMirror 6, Vercel AI SDK v6, Tailwind v4, shadcn/ui और Zustand।
+Tauri 2, Rust, `portable-pty`, React 19, TypeScript, Vite, libghostty-vt (Ghostty), CodeMirror 6, Tailwind v4, Zustand।
 
 ## योगदान
 
-Issues और PR का स्वागत है। समस्याएँ रिपोर्ट करें, सुविधाएँ सुझाएँ या pull request भेजें। अधिक जानकारी के लिए [CONTRIBUTING.md](../../CONTRIBUTING.md) और [आर्किटेक्चर दस्तावेज़](../README.md) देखें।
+Issues और PR का स्वागत है! Issues खोलें, फ़ीचर सुझाएँ या पुल रिक्वेस्ट भेजें। विवरण के लिए [CONTRIBUTING.md](../../CONTRIBUTING.md) और [आर्किटेक्चर दस्तावेज़](../README.md) देखें।
+
+## क्रेडिट
+
+Rex, [Terax](https://github.com/crynta/terax-ai) का फ़ोर्क है, जिसे [@crynta](https://github.com/crynta) ने बनाया और बनाए रखा है। मूल प्रोजेक्ट का सारा श्रेय Crynta को जाता है।
 
 ## कोड साइनिंग
 
 <a href="https://signpath.org"><img src="https://avatars.githubusercontent.com/u/34448643?s=200&v=4" width="80" alt="SignPath" align="left" /></a>
 
-Windows बिल्ड [SignPath.io](https://signpath.io) द्वारा दिए गए और [SignPath Foundation](https://signpath.org) द्वारा जारी मुफ़्त कोड-साइनिंग प्रमाणपत्र से साइन किए जाते हैं।
+Windows बिल्ड [SignPath.io](https://signpath.io) द्वारा दिए गए मुफ़्त कोड साइनिंग सर्टिफ़िकेट से साइन किए जाते हैं, सर्टिफ़िकेट [SignPath Foundation](https://signpath.org) द्वारा।
 
 <br clear="left" />
 
 ## लाइसेंस
 
-Rex Apache-2.0 लाइसेंस के अंतर्गत है। निर्भरताओं की जानकारी के लिए [Apache License 2.0](../../LICENSE) देखें।
+Rex Apache-2.0 लाइसेंस के तहत लाइसेंस प्राप्त है। हमारी डिपेंडेंसी की जानकारी के लिए [Apache License 2.0](../../LICENSE) देखें।

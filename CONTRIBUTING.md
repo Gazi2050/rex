@@ -1,5 +1,7 @@
 # Contributing to Rex
 
+Rex is a fork of [Terax](https://github.com/crynta/terax-ai) by [@crynta](https://github.com/crynta); credit for the original design and implementation goes to Crynta.
+
 Rex is a solo-maintained project with a strong product direction. Contributions are welcome, but **alignment matters more than volume**.
 
 This document helps you decide *whether* and *how* to contribute in a way that's likely to get merged, so neither of us wastes time.
@@ -66,7 +68,6 @@ For anything beyond a small fix, **discussion is required before opening a PR**.
 - Performance rewrites
 - Architectural changes
 - Anything touching many files or systems
-- New AI providers
 
 Pull requests with significant unsolicited changes will be closed without detailed review. This isn't meant to discourage contribution. It ensures alignment before significant work goes in.
 
@@ -82,10 +83,10 @@ Rex positions itself as **lightweight, fast, production-grade**. Every PR is rev
 - `cargo clippy --all-targets --locked -- -D warnings` clean
 - `cargo nextest run --locked` clean (or `cargo test --locked`)
 - `cargo fmt` applied before pushing
-- No perf regressions in known hot paths: terminal renderer, PTY stream, AI streaming, source control, file explorer
+- No perf regressions in known hot paths: terminal renderer, PTY stream, source control, file explorer
 - No new heavy dependencies (>50KB gzip in client bundle, >5MB compiled on Rust side) without justification
 - Platform parity preserved (macOS / Linux / Windows / WSL still work)
-- Security review for changes to AI tool surface, file system access, network paths, IPC commands
+- Security review for changes to the IPC command surface, file system access, network paths
 
 If you're not sure how to measure perf or what counts as a hot path, ask in Discord or an issue. Better to confirm than get bounced.
 
@@ -96,10 +97,10 @@ The most common way a PR breaks Rex is a **local fix with global blast radius**:
 So if your change touches behavior in any of these load-bearing paths, the PR must add or extend a test that locks the invariant you're relying on:
 
 - **Shell/terminal spawn**: what shell launches, with which cwd, env, and login flags. A "fix" here can stop terminals from starting entirely.
-- **Workspace authorization**: which directories spawns, git, and AI tools may operate in. Both the allow and the deny side.
+- **Workspace authorization**: which directories spawns and git commands may operate in. Both the allow and the deny side.
 - **Git command layer**: repo-root resolution, pathspec/argument guards, status parsing.
 - **Filesystem mutation**: atomic writes, symlink handling, no-data-loss on partial failure.
-- **IPC command surface and AI tool surface**: anything the webview or the agent can invoke.
+- **IPC command surface**: anything the webview can invoke.
 - **Pure logic with wide reach**: cwd inheritance, tab/split tree transforms, OSC/prompt parsing, the command guard.
 
 The bar for the test is real coverage of the contract, not a placeholder. Test the case that would actually break: the edge, the deny path, the "what happens one level above home". If you can't see how to test it, ask in Discord before opening the PR. That conversation is usually shorter than the revert.
@@ -110,7 +111,7 @@ UI rendering, themes, syntax-highlight tables, and anything the type-checker alr
 
 To set expectations:
 
-- Rex is terminal-first, not an IDE clone. Focused capabilities such as LSP, AI autocomplete, formatting, source control, and previews belong when they stay fast, lazy, and resource-bounded.
+- Rex is terminal-first, not an IDE clone. Focused capabilities such as LSP, formatting, source control, and previews belong when they stay fast, lazy, and resource-bounded.
 - Not building: Jupyter-style workspaces, integrated debugger and profiler suites, package manager UIs, a full web browser, unbounded background indexing, or an IDE-scale extension host.
 - This is not a curated "first open-source contribution" project. Beginners are welcome but expect normal review.
 - Mechanical refactors, broad style changes, drive-by rewrites are not helpful.
@@ -141,12 +142,12 @@ The **PR title becomes the squash commit** for most PRs. Multi-commit PRs with w
 feat(terminal): add split panes
 fix(explorer): prevent input from disappearing on create
 chore(deps): bump tauri to 2.x
-security(ai): tighten path guard
+security(pty): tighten path guard
 ```
 
 Types: `feat`, `fix`, `chore`, `docs`, `perf`, `refactor`, `test`, `build`, `ci`, `security`.
 
-Common scopes: `terminal`, `editor`, `explorer`, `pty`, `ai`, `agents`, `settings`, `tabs`, `shortcuts`, `ui`, `git`, `preview`, `windows`, `linux`, `macos`, `wsl`.
+Common scopes: `terminal`, `editor`, `explorer`, `pty`, `settings`, `tabs`, `shortcuts`, `ui`, `git`, `preview`, `windows`, `linux`, `macos`, `wsl`.
 
 Within a PR, individual commit messages can be free-form (they get squashed or grouped).
 
@@ -187,31 +188,32 @@ src-tauri/                  Rust backend
   src/
     lib.rs                  Tauri command registration
     modules/
-      agent.rs              Terminal coding-agent hook installer/status
-      fs/                   File system commands (read/write/search/grep)
-      git/                  Source control commands
-      history/              Shell history integration
-      mod.rs                Module exports
-      net.rs                AI HTTP proxy with SSRF guard
-      proc.rs               Process utilities
+      control.rs            CLI control plane (auth, routing, limits)
+      fs/                   File system commands (read/write/search/grep/watch/copy)
+      git/                  Source control commands, AI commit message
+      lsp/                  Language server process host
+      proc/                 Process utilities (capture, job objects)
       pty/                  Terminal sessions, shell integration, DA filter
-      secrets.rs            OS keychain access
       shell/                Oneshot/session/background shell commands
       workspace.rs          WSL bridge, workspace env, authorization registry
+      app_menu.rs           Native application menu
+      runtime.rs            Async runtime workers
+      vibrancy.rs           Native window backdrop
+      window_presentation.rs Occlusion/sleep presentation state
 
 src/                        React frontend
-  App.tsx                   Top-level coordinator
-  components/               shadcn/ui + AI Elements
+  app/                      App.tsx coordinator, startup-graph budgets
+  components/               shadcn/ui primitives
   modules/
-    agents/                 Agent notifications and management
-    ai/                     Agents, sessions, tools, providers, composer
-    command-palette/        Modal command palette and actions
-    editor/                 CodeMirror stack, AI autocomplete
+    control/                Maps a CLI caller pane to its tab and space
+    editor/                 CodeMirror stack, formatters, themes
     explorer/               File tree
     git-history/            Git graph and history pane
     header/                 Top bar, search, window controls
+    lsp/                    Language server UI and session manager
     markdown/               Markdown preview renderer
-    preview/                Dev server, image, and web preview
+    native/                 Typed invoke wrappers for fs/git/shell commands
+    preview/                Dev server and web preview
     settings/               Settings UI and preferences store
     shortcuts/              Keymap registry
     sidebar/                Activity bar and side panels
@@ -219,7 +221,7 @@ src/                        React frontend
     spaces/                 Workspace spaces/projects with per-space tab persistence
     statusbar/              Bottom bar and cwd breadcrumb
     tabs/                   Tab/split model
-    terminal/               xterm.js sessions, OSC handlers, renderer pool
+    terminal/               Ghostty terminal sessions, WebGPU/WebGL renderers
     theme/                  Custom theme engine and presets
     updater/                Auto-updater UI
     workspace/              Workspace environment switching
@@ -244,9 +246,6 @@ A: Focus on your stated goal. Submit cleanup as a separate PR after discussion i
 
 **Q: How long does review take?**
 A: Depends. Small bug fix or docs: usually within a few days. Larger feature: maybe a week or two. Pre-discussed work moves faster.
-
-**Q: Why did my PR for a new AI provider get closed?**
-A: Most provider requests are now covered by the `openai-compatible` provider (point it at any OpenAI-compatible base URL) or OpenRouter. New built-in providers must justify unique value beyond what those cover.
 
 **Q: My PR conflicts after main moved. Should I rebase?**
 A: If the change is still relevant and reasonably small, yes. If it's a large stale PR, expect it to be closed with an offer to reopen after rebase. Rotting velocity is real, not personal.
