@@ -63,6 +63,7 @@ type SourceControlPanelState = {
   status: GitStatusSnapshot | null;
   selected: DiffSelection | null;
   commitMessage: string;
+  generatingMessage: boolean;
   actionBusy: string | null;
   statusError: string | null;
   actionError: string | null;
@@ -80,6 +81,7 @@ type SourceControlPanelState = {
   unstagedEmptyText: string;
   pendingDiscard: PendingDiscard | null;
   setCommitMessage: (value: string) => void;
+  generateCommitMessage: () => Promise<void>;
   refresh: () => Promise<void>;
   selectEntry: (entry: SourceControlEntry) => Promise<void>;
   selectFile: (entry: SourceControlFileEntry) => Promise<void>;
@@ -282,6 +284,7 @@ export function useSourceControlPanel(
   const [status, setStatus] = useState<GitStatusSnapshot | null>(null);
   const [selected, setSelected] = useState<DiffSelection | null>(null);
   const [commitMessage, setCommitMessage] = useState("");
+  const [generatingMessage, setGeneratingMessage] = useState(false);
   const [localActionBusy, setLocalActionBusy] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
@@ -693,6 +696,22 @@ export function useSourceControlPanel(
     [repo, summary.busyAction],
   );
 
+  const generateCommitMessage = useCallback(async () => {
+    if (!repo || generatingMessage || stagedEntries.length === 0) return;
+    setGeneratingMessage(true);
+    setActionError(null);
+    setActionMessage(null);
+    try {
+      const message = await native.gitAiCommitMessage(repo.repoRoot);
+      setCommitMessage(message);
+      setActionMessage("Generated commit message");
+    } catch (error) {
+      setActionError(normalizeError(error));
+    } finally {
+      setGeneratingMessage(false);
+    }
+  }, [generatingMessage, repo, stagedEntries.length]);
+
   const commit = useCallback(async () => {
     if (!repo || summary.busyAction) return;
     setLocalActionBusy("commit");
@@ -753,6 +772,7 @@ export function useSourceControlPanel(
     status,
     selected,
     commitMessage,
+    generatingMessage,
     actionBusy: localActionBusy ?? summary.busyAction,
     statusError: summary.localError,
     actionError,
@@ -770,6 +790,7 @@ export function useSourceControlPanel(
     unstagedEmptyText,
     pendingDiscard: pendingDiscardView,
     setCommitMessage,
+    generateCommitMessage,
     refresh,
     selectEntry,
     selectFile,

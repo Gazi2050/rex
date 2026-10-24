@@ -13,7 +13,7 @@ If a guide conflicts with `REX.md`, `REX.md` wins.
 
 - [Two-process model and IPC command reference](architecture/two-process-model.md) - Rust owns all OS access; the webview talks through `invoke()`. Command catalog and how to add a new command.
 - [PTY shell integration](architecture/pty-shell-integration.md) - PTY sessions, shell init scripts, OSC 7 / 133, ConPTY, CONPTY_LIFECYCLE_LOCK, Job Object, WSL.
-- [Security model](architecture/security-model.md) - deny-list, SSRF guard, workspace authorization, IPC allowlist, OSC trust, keychain handling.
+- [Security model](architecture/security-model.md) - workspace authorization, IPC allowlist, OSC trust, outbound network policy.
 - [Terminal renderer pool](architecture/terminal-renderer-pool.md) - persistent Ghostty models, bounded presentation leases, and renderer recovery.
 - [Ghostty WebGL renderer](architecture/ghostty-webgl-renderer.md) - adapted xterm.js renderer, Ghostty model boundary, renderer pooling, and rollout gates.
 - [CLI control plane](architecture/cli-control.md) - bundled CLI, authenticated local protocol, caller targeting, packaging, and current platform limits.

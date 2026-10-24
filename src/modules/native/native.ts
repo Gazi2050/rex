@@ -324,6 +324,11 @@ export const native = {
       message,
       workspace: currentWorkspaceEnv(),
     }),
+  gitAiCommitMessage: (repoRoot: string) =>
+    invoke<string>("git_ai_commit_message", {
+      repoRoot,
+      workspace: currentWorkspaceEnv(),
+    }),
   gitFetch: (repoRoot: string) =>
     invoke<void>("git_fetch", {
       repoRoot,

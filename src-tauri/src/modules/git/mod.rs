@@ -1,3 +1,4 @@
+pub mod ai_commit;
 pub mod commands;
 pub mod errors;
 pub mod operations;

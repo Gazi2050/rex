@@ -50,6 +50,7 @@ import {
 import { joinPath } from "@/modules/explorer/lib/useFileTree";
 import {
   Alert02Icon,
+  AiGenerateIcon,
   ArrowDown01Icon,
   ArrowRight01Icon,
   ArrowUp01Icon,
@@ -855,7 +856,34 @@ export const SourceControlPanel = memo(function SourceControlPanel({
                     </span>
                   )}
                 </div>
-                <div className="absolute right-1 top-1" />
+                <div className="absolute right-1 top-1">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-6 rounded-md text-muted-foreground hover:text-foreground"
+                          disabled={
+                            scm.generatingMessage || stagedCount === 0
+                          }
+                          onClick={() => void scm.generateCommitMessage()}
+                        >
+                          {scm.generatingMessage ? (
+                            <Spinner className="size-3.5" />
+                          ) : (
+                            <HugeiconsIcon
+                              icon={AiGenerateIcon}
+                              size={14}
+                              strokeWidth={2}
+                            />
+                          )}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Generate commit message</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
               </div>
 
               <div className="flex min-w-0 items-center gap-1.5 text-[10.5px] text-muted-foreground">
