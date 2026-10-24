@@ -39,7 +39,8 @@ const inspectGraph = process.env.INSPECT === "true";
  * npm package a module id belongs to (`@scope/name` or `name`), resolved from
  * the *last* `node_modules/` segment so pnpm's `.pnpm/<pkg>@<ver>/node_modules/`
  * indirection yields the real package. Substring tests such as `/react/` are
- * wrong here: `@ai-sdk/react/dist` and `@hugeicons/react/dist` both contain it.
+ * wrong here: `@codemirror/react`-style paths and `@hugeicons/react/dist`
+ * both contain it.
  */
 function packageOf(id: string): string | null {
   const m = id.match(/.*node_modules\/((?:@[^/]+\/)?[^/]+)/);
@@ -53,8 +54,8 @@ const EAGER_REACT_PACKAGES = new Set([
   "@hugeicons/react",
   // Ubiquitous styling utils used by `cn()` on nearly every eager
   // component. Left unassigned, Rollup absorbs them into whichever
-  // feature chunk claims them first (observed: streamdown), dragging
-  // that heavy chunk into the eager graph. Pin them to react (eager).
+  // feature chunk claims them first (observed: the streamdown chunk),
+  // dragging that heavy chunk into the eager graph. Pin them to react.
   "clsx",
   "tailwind-merge",
   "class-variance-authority",
