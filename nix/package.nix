@@ -9,15 +9,15 @@ let
 
   srcMap = {
     x86_64-linux = fetchurl {
-      url = "https://github.com/Gazi2050/rex/releases/download/v${version}/Rex_${version}_amd64.deb";
+      url = "https://github.com/Gazi2050/rex/releases/download/v${version}/Rex_Terminal_${version}_amd64.deb";
       hash = sources.hashes.x86_64-linux;
     };
     x86_64-darwin = fetchurl {
-      url = "https://github.com/Gazi2050/rex/releases/download/v${version}/Rex_x64.app.tar.gz";
+      url = "https://github.com/Gazi2050/rex/releases/download/v${version}/Rex_Terminal_${version}_x64.app.tar.gz";
       hash = sources.hashes.x86_64-darwin;
     };
     aarch64-darwin = fetchurl {
-      url = "https://github.com/Gazi2050/rex/releases/download/v${version}/Rex_aarch64.app.tar.gz";
+      url = "https://github.com/Gazi2050/rex/releases/download/v${version}/Rex_Terminal_${version}_aarch64.app.tar.gz";
       hash = sources.hashes.aarch64-darwin;
     };
   };
@@ -57,7 +57,7 @@ stdenv.mkDerivation {
   installPhase = if stdenv.hostPlatform.isLinux then ''
     mkdir -p $out/bin $out/share
     cp -r usr/share/* $out/share/
-    install -Dm755 usr/bin/rex $out/bin/rex
+    install -Dm755 usr/bin/rex-terminal $out/bin/rex-terminal
 
     wrapProgram $out/bin/rex \
       "''${gappsWrapperArgs[@]}" \
