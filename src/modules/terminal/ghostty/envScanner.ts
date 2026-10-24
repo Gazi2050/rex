@@ -94,7 +94,7 @@ function latin1(bytes: Uint8Array): string {
   return s;
 }
 
-export function parseEnvBody(body: string): LeafEnvUpdate | null {
+function parseEnvBody(body: string): LeafEnvUpdate | null {
   const eq = body.indexOf("=");
   if (eq <= 0) return null;
   const key = body.slice(0, eq);

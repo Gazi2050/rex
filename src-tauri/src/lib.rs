@@ -2,9 +2,7 @@ pub mod modules;
 
 #[cfg(target_os = "macos")]
 use modules::app_menu;
-use modules::{
-    control, fs, git, history, lsp, pty, shell, vibrancy, workspace,
-};
+use modules::{control, fs, git, lsp, pty, shell, vibrancy, workspace};
 use std::path::PathBuf;
 use std::sync::Mutex;
 use tauri::{Emitter, Manager, State, WebviewUrl, WebviewWindowBuilder};
@@ -164,6 +162,11 @@ async fn open_settings_window(app: tauri::AppHandle, tab: Option<String>) -> Res
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // reqwest builds with `rustls-no-provider`; without an installed provider
+    // every HTTPS request (updater, AI commit message) fails at runtime.
+    rustls::crypto::ring::default_provider()
+        .install_default()
+        .ok();
     #[cfg(windows)]
     {
         let args: Vec<String> = std::env::args().collect();
@@ -249,7 +252,6 @@ pub fn run() {
         .manage(control_state)
         .manage(shell::ShellState::default())
         .manage(fs::watch::FsWatchState::default())
-        .manage(history::HistoryState::default())
         .manage(lsp::LspState::default())
         .manage(fs::supersede::Supersede::default())
         .manage(fs::index::FileIndexState::default())
@@ -341,10 +343,6 @@ pub fn run() {
             get_launch_dir,
             get_launch_files,
             open_settings_window,
-            history::history_suggest,
-            history::history_commands,
-            history::history_record,
-            history::history_list,
             vibrancy::window_backdrop_kind,
             vibrancy::window_set_backdrop,
             modules::window_presentation::window_presentation_state,

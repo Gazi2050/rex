@@ -28,8 +28,6 @@ export function isPrimaryModifierPressed(e: {
 }): boolean {
   return IS_MAC ? e.metaKey : e.ctrlKey;
 }
-export const SHIFT_KEY = IS_MAC ? "⇧" : "Shift";
-
 export const KEY_SEP = IS_MAC ? "" : "+";
 
 export function fmtShortcut(...parts: string[]): string {

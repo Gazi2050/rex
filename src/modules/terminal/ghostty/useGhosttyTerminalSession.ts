@@ -34,9 +34,6 @@ import {
 } from "./gpu/WebGpuTerminalRuntime";
 import { WebGpuTerminalSurface } from "./gpu/WebGpuTerminalSurface";
 import { GhosttyInputController } from "./input/GhosttyInputController";
-import {
-  encodeTerminalSubmission,
-} from "./input/terminalInputEncoding";
 import type {
   WebGlTerminalSurface,
   WebGlTerminalSurfaceOptions,
@@ -293,25 +290,6 @@ export function writeToGhosttySession(leafId: number, data: string): boolean {
   return session.writer.enqueue(textEncoder.encode(data));
 }
 
-export function submitToGhosttySession(leafId: number, text: string): boolean {
-  const session = sessions.get(leafId);
-  if (!session || session.shellExited || session.disposed) return false;
-  const data = encodeTerminalSubmission(
-    text,
-    session.model?.modes().bracketedPaste ?? false,
-  );
-  const accepted = session.writer.enqueue(textEncoder.encode(data));
-  if (accepted) {
-    session.model?.scrollToBottom();
-  }
-  return accepted;
-}
-
-export function interruptGhosttySession(leafId: number): boolean {
-  const session = sessions.get(leafId);
-  return session?.writer.enqueue(Uint8Array.of(3)) ?? false;
-}
-
 export function clearGhosttySession(leafId: number): boolean {
   const session = sessions.get(leafId);
   if (!session?.model || session.disposed) return false;
@@ -355,17 +333,6 @@ export async function whenGhosttySessionReady(
     !session.startupError &&
     !session.disposed
   );
-}
-
-export function ghosttyPtyIdForLeaf(leafId: number): number | null {
-  return sessions.get(leafId)?.pty?.id ?? null;
-}
-
-export function ghosttyLeafIdForPty(ptyId: number): number | null {
-  for (const [leafId, session] of sessions) {
-    if (session.pty?.id === ptyId) return leafId;
-  }
-  return null;
 }
 
 export async function ghosttyLeafHasForegroundProcess(
@@ -875,7 +842,7 @@ function createGhosttyInput(
   });
 }
 
-export function focusGhosttySession(leafId: number): void {
+function focusGhosttySession(leafId: number): void {
   const session = sessions.get(leafId);
   if (session) session.surface?.focus();
 }

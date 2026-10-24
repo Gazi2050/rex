@@ -4,13 +4,9 @@ import {
   ghosttyCwdForLeaf,
   ghosttyFocusedLeaf,
   ghosttyLeafHasForegroundProcess,
-  ghosttyLeafIdForPty,
-  ghosttyPtyIdForLeaf,
   ghosttySelectionForLeaf,
   hasGhosttySession,
-  interruptGhosttySession,
   pasteIntoGhosttySession,
-  submitToGhosttySession,
   whenGhosttySessionReady,
   writeToGhosttySession,
 } from "@/modules/terminal/ghostty/useGhosttyTerminalSession";
@@ -36,14 +32,6 @@ export function writeToSession(leafId: number, data: string): boolean {
   return writeToGhosttySession(leafId, data);
 }
 
-export function submitToLeaf(leafId: number, text: string): void {
-  submitToGhosttySession(leafId, text);
-}
-
-export function interruptLeaf(leafId: number): void {
-  interruptGhosttySession(leafId);
-}
-
 export function pasteIntoSession(leafId: number, text: string): boolean {
   return pasteIntoGhosttySession(leafId, text);
 }
@@ -60,14 +48,6 @@ export function clearFocusedTerminal(): boolean {
   const ghosttyLeaf = ghosttyFocusedLeaf();
   if (ghosttyLeaf !== null) return clearGhosttySession(ghosttyLeaf);
   return false;
-}
-
-export function leafIdForPty(ptyId: number): number | null {
-  return ghosttyLeafIdForPty(ptyId);
-}
-
-export function ptyIdForLeaf(leafId: number): number | null {
-  return ghosttyPtyIdForLeaf(leafId);
 }
 
 export async function leafHasForegroundProcess(

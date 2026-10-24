@@ -5,7 +5,6 @@ pub mod bench;
 pub mod control;
 pub mod fs;
 pub mod git;
-pub mod history;
 pub mod lsp;
 pub mod proc;
 pub mod pty;

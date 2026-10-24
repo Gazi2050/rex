@@ -16,7 +16,6 @@ import { highlight, isHighlightable, type HighlightedNode } from "./highlighter"
 // fenced-code contents during this phase: parsing partial code is wasted
 // work and a flashing skeleton is calmer UI than text that grows char-by-char.
 const StreamingCtx = createContext(false);
-export const ChatStreamingProvider = StreamingCtx.Provider;
 
 const POSIX_SHELL = new Set([
   "bash",

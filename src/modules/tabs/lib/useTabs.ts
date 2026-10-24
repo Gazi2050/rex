@@ -24,7 +24,7 @@ import {
 } from "react";
 
 // Matches the renderer slot pool size — over this we'd evict an active leaf.
-export const MAX_PANES_PER_TAB = 4;
+const MAX_PANES_PER_TAB = 4;
 
 type TabBase = {
   spaceId: string;

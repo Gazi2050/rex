@@ -3487,7 +3487,6 @@ dependencies = [
  "bytes",
  "dirs 7.0.0",
  "fsevent-sys",
- "futures-util",
  "getrandom 0.4.3",
  "globset",
  "grep-regex",

@@ -184,7 +184,9 @@ async function getStream(
 ): Promise<StreamParser<unknown>> {
   const hit = streamCache.get(key);
   if (hit) return hit;
-  const parser = await streamLoaders[key]!();
+  const load = streamLoaders[key];
+  if (!load) throw new Error(`no stream loader for ${key}`);
+  const parser = await load();
   streamCache.set(key, parser);
   return parser;
 }

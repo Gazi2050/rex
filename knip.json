@@ -4,7 +4,7 @@
     "src/components/ui/**"
   ],
   "ignoreDependencies": [
-    "@tauri-apps/plugin-log",
+    "@smoke-driver",
     "@tauri-apps/plugin-window-state",
     "@fontsource-variable/inter",
     "@fontsource/jetbrains-mono"

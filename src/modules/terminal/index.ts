@@ -3,14 +3,11 @@ export {
   hasLeaf,
   leafIds,
   type PaneBounds,
-  type PaneNode,
 } from "./lib/panes";
 export {
   clearFocusedTerminal,
   disposeSession,
   leafHasForegroundProcess,
-  leafIdForPty,
-  ptyIdForLeaf,
   whenSessionReady,
   writeToSession,
 } from "./lib/terminalSessionApi";
