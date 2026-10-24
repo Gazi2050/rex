@@ -1,7 +1,7 @@
 [package]
 name = "rex"
-version = "0.9.0"
-description = "Rex — an open-source AI-native terminal emulator"
+version = "1.0.0"
+description = "Rex - an open-source lightweight workspace terminal"
 authors = ["Gazi2050"]
 license = "Apache-2.0"
 edition = "2021"
@@ -13,7 +13,7 @@ default-members = [".", "crates/rex-cli", "crates/rex-control-protocol"]
 resolver = "2"
 
 [workspace.package]
-version = "0.9.0"
+version = "1.0.0"
 edition = "2021"
 license = "Apache-2.0"
 

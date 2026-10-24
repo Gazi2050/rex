@@ -1,5 +1,5 @@
 {
-  description = "Rex - open-source lightweight cross-platform AI-native terminal (ADE)";
+  description = "Rex - open-source lightweight cross-platform workspace terminal";
 
   inputs.nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
 

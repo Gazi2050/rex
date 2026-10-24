@@ -111,7 +111,7 @@ The themes below frame every scope decision.
 
 ## Wanted contributions
 
-Strategic areas where help is welcome. Pick something and propose an approach in Discord or via an issue first.
+Strategic areas where help is welcome. Pick something and propose an approach via an issue first.
 
 - **Regression tests.** Add focused coverage for bug fixes and critical PTY, security, and native-boundary invariants.
 - **Measured performance work.** Profile first and propose focused changes that preserve startup time, bundle size, memory use, and hot-path latency.
@@ -137,6 +137,6 @@ Categories that will not be built into Rex. Individual feature requests in these
 
 Direction and scope decisions are made by [@Gazi2050](https://github.com/Gazi2050). Trusted reviewers (informal, no fixed roles yet) provide input on security, performance, and platform-specific areas.
 
-If a PR is closed and you disagree, raise it in Discord. Happy to discuss, not happy to be ambushed in a PR comment thread.
+If a PR is closed and you disagree, raise it in an issue. Happy to discuss, not happy to be ambushed in a PR comment thread.
 
 This will likely formalize over time as the project grows.

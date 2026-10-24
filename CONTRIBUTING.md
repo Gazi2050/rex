@@ -26,19 +26,13 @@ Prereqs: Rust (stable), Node 22+, pnpm, plus your platform's [Tauri prerequisite
 
 For the architecture and how to contribute safely, see [REX.md](REX.md) and the [docs/ index](docs/README.md).
 
-## Where to discuss
-
-Discord: [Crynta OS](https://discord.gg/tyveTUyEp7)
-
-Use Discord for design discussion, scope questions, "should I work on X?", quick feedback. Use GitHub Issues for tracking concrete bugs and features.
-
 ## What makes a good contribution
 
 These get merged fast:
 
 - **Bug fixes** with clear reproduction steps.
 - **Docs / typos / small UX fixes** - open a PR directly.
-- **Pre-discussed features** - alignment in an issue or Discord first.
+- **Pre-discussed features** - alignment in an issue first.
 - **Small, focused changes** - easy to review, low risk.
 
 If your change is small and obvious (typo, narrow bugfix, small docs change), open a PR directly. No issue required.
@@ -88,7 +82,7 @@ Rex positions itself as **lightweight, fast, production-grade**. Every PR is rev
 - Platform parity preserved (macOS / Linux / Windows / WSL still work)
 - Security review for changes to the IPC command surface, file system access, network paths
 
-If you're not sure how to measure perf or what counts as a hot path, ask in Discord or an issue. Better to confirm than get bounced.
+If you're not sure how to measure perf or what counts as a hot path, ask in an issue. Better to confirm than get bounced.
 
 ## Changes to core subsystems require a test
 
@@ -103,7 +97,7 @@ So if your change touches behavior in any of these load-bearing paths, the PR mu
 - **IPC command surface**: anything the webview can invoke.
 - **Pure logic with wide reach**: cwd inheritance, tab/split tree transforms, OSC/prompt parsing, the command guard.
 
-The bar for the test is real coverage of the contract, not a placeholder. Test the case that would actually break: the edge, the deny path, the "what happens one level above home". If you can't see how to test it, ask in Discord before opening the PR. That conversation is usually shorter than the revert.
+The bar for the test is real coverage of the contract, not a placeholder. Test the case that would actually break: the edge, the deny path, the "what happens one level above home". If you can't see how to test it, ask in an issue before opening the PR. That conversation is usually shorter than the revert.
 
 UI rendering, themes, syntax-highlight tables, and anything the type-checker already guarantees do not need tests.
 
@@ -233,7 +227,7 @@ src/                        React frontend
 A: No, open a PR directly.
 
 **Q: I have an idea for a new feature.**
-A: Open a GitHub issue or bring it to Discord. Don't open a PR without prior discussion.
+A: Open a GitHub issue. Do not open a PR without prior discussion.
 
 **Q: My PR was closed without detailed feedback.**
 A: Usually means it didn't align with project direction, or scope was too large to review responsibly. This is normal for a solo project. Reopen is welcome if you want to take another pass at a smaller scope.
