@@ -84,7 +84,7 @@ jobs:
             args: --target x86_64-apple-darwin
             rust-target: x86_64-apple-darwin
           - platform: ubuntu-22.04
-            args: ""
+            args: "--bundles deb"
             rust-target: ""
           - platform: windows-latest
             args: ""
@@ -147,6 +147,9 @@ jobs:
           printf '%s' "$KEY_CONTENT" > "$HOME/private_keys/AuthKey.p8"
           echo "APPLE_API_KEY_PATH=$HOME/private_keys/AuthKey.p8" >> "$GITHUB_ENV"
 
+      # Linux ships the .deb only for now; rpm and AppImage return later.
+      # The deb is not an updater target, so Linux updates use the manual
+      # "download the package" flow and contribute no latest.json entries.
       - id: tauri
         uses: tauri-apps/tauri-action@v1
         env:
@@ -170,77 +173,14 @@ jobs:
           prerelease: false
           args: ${{ matrix.args }}
 
-      # Strip the bundled libwayland-* libs from the AppImage so it loads the
-      # host copies at runtime. The Ubuntu 22.04 build host ships libwayland
-      # 1.20, but recent Mesa (Fedora 43 / Arch / Bazzite, Mesa 1.22+) needs
-      # newer symbols; AppImage puts its bundled libs first on the search path,
-      # so the stale copy wins and EGL fails with EGL_BAD_PARAMETER. libgdk-3
-      # hard-links these three, so removing them only redirects resolution to
-      # the host copy, which every GTK-capable system has. They are on the
-      # AppImage excludelist for this exact reason. The re-signed AppImage and
-      # its .sig are re-uploaded here; the updater manifest is patched in the
-      # patch-updater-manifest job after all matrix legs finish, so a parallel
-      # macOS/Windows upload cannot clobber the combined latest.json.
-      - name: Fix AppImage wayland libs and re-sign
-        if: matrix.platform == 'ubuntu-22.04'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-        run: |
-          set -euo pipefail
-
-          APPIMAGE=$(ls src-tauri/target/release/bundle/appimage/*.AppImage | head -n1)
-          BASENAME=$(basename "$APPIMAGE")
-          echo "Patching: $APPIMAGE"
-
-          WORK=$(mktemp -d)
-          cp "$APPIMAGE" "$WORK/"
-          pushd "$WORK" >/dev/null
-          chmod +x "./$BASENAME"
-          "./$BASENAME" --appimage-extract >/dev/null
-
-          test -x squashfs-root/usr/bin/rex \
-            || { echo "rex binary missing from AppImage"; exit 1; }
-
-          # linuxdeploy may already exclude some of these libraries.
-          find squashfs-root \( -type f -o -type l \) \
-            -name 'libwayland-*.so*' -print -delete
-
-          curl -fsSL -o appimagetool.AppImage \
-            https://github.com/AppImage/appimagetool/releases/download/1.9.1/appimagetool-x86_64.AppImage
-          chmod +x appimagetool.AppImage
-          ARCH=x86_64 ./appimagetool.AppImage --appimage-extract-and-run squashfs-root "$BASENAME"
-
-          # Sanity-check the repacked image before it replaces the original.
-          rm -rf squashfs-root
-          chmod +x "./$BASENAME"
-          "./$BASENAME" --appimage-extract >/dev/null
-          if find squashfs-root -name 'libwayland-*.so*' -print -quit | grep -q .; then
-            echo "Wayland library still present after repack"
-            exit 1
-          fi
-          test -x squashfs-root/usr/bin/rex \
-            || { echo "rex binary missing from repacked AppImage"; exit 1; }
-          popd >/dev/null
-
-          cp "$WORK/$BASENAME" "$APPIMAGE"
-
-          rm -f "$APPIMAGE.sig"
-          pnpm tauri signer sign "$APPIMAGE"
-
-          TAG="${{ needs.version.outputs.new_tag }}"
-          gh release upload "$TAG" "$APPIMAGE" "$APPIMAGE.sig" \
-            --clobber --repo "$GITHUB_REPOSITORY"
-
-  # Patch the re-signed AppImage signatures into the
-  # combined updater manifest. Runs once, after every matrix leg has finished
-  # merging its platform into latest.json, so it operates on the full manifest
-  # and cannot be clobbered by a parallel upload. Both linux keys point at the
-  # AppImage; the three windows keys point at the installers tauri-action
-  # produced and signed with TAURI_SIGNING_PRIVATE_KEY.
-  patch-updater-manifest:
-    name: Patch updater manifest
+  # Each build leg uploads its own latest.json (last writer wins), so the
+  # final job rebuilds the combined manifest from the per-artifact .sig
+  # files. Windows uses the NSIS .exe (primary) and the .msi; macOS uses
+  # the per-arch app.tar.gz updater bundles. Linux is absent on purpose:
+  # the .deb is not an updater target, and the app's Linux path points
+  # users at the release page instead.
+  updater-manifest:
+    name: Publish updater manifest
     needs:
       - version
       - build
@@ -248,61 +188,53 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Patch latest.json with re-signed AppImage and Windows signatures
+      - name: Build latest.json from updater signatures
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           TAG="${{ needs.version.outputs.new_tag }}"
+          VER="${TAG#v}"
 
           gh release download "$TAG" --repo "$GITHUB_REPOSITORY" \
-            --pattern "latest.json" \
-            --pattern "*_amd64.AppImage.sig" \
             --pattern "*_x64-setup.exe.sig" \
-            --pattern "*_x64_en-US.msi.sig" --clobber
+            --pattern "*_x64_en-US.msi.sig" \
+            --pattern "*_aarch64.app.tar.gz.sig" \
+            --pattern "*_x64.app.tar.gz.sig" --clobber
 
-          APP_SIG=$(cat ./*_amd64.AppImage.sig)
-          EXE_SIG=$(cat ./*_x64-setup.exe.sig)
-          MSI_SIG=$(cat ./*_x64_en-US.msi.sig)
+          pick() {
+            local f
+            f=$(ls ./"$1" | head -n1)
+            basename "$f" .sig
+            base64 -w0 "$f"
+          }
 
-          # Re-signing an artifact re-uploads it with --clobber, which deletes
-          # and recreates the asset under a new id. tauri-action baked the old
-          # asset-id API urls into latest.json, so we also rewrite the urls of
-          # the re-signed artifacts to the tag+filename download url, which is
-          # stable across clobbers. Filenames come from the .sig names.
-          APP_FILE=$(basename "$(ls ./*_amd64.AppImage.sig)" .sig)
-          EXE_FILE=$(basename "$(ls ./*_x64-setup.exe.sig)" .sig)
-          MSI_FILE=$(basename "$(ls ./*_x64_en-US.msi.sig)" .sig)
           DL="https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}"
+          { read -r NSIS_FILE NSIS_SIG; } <<< "$(pick '*_x64-setup.exe.sig')"
+          { read -r MSI_FILE MSI_SIG; } <<< "$(pick '*_x64_en-US.msi.sig')"
+          { read -r AA_FILE AA_SIG; } <<< "$(pick '*_aarch64.app.tar.gz.sig')"
+          { read -r AX_FILE AX_SIG; } <<< "$(pick '*_x64.app.tar.gz.sig')"
 
-          jq -e 'has("platforms") and (.platforms | has("linux-x86_64")
-            and has("windows-x86_64") and has("windows-x86_64-msi")
-            and has("windows-x86_64-nsis"))' latest.json >/dev/null \
+          jq -n \
+            --arg version "$VER" \
+            --arg pub_date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --arg nsis_sig "$NSIS_SIG" --arg nsis_url "$DL/$NSIS_FILE" \
+            --arg msi_sig "$MSI_SIG" --arg msi_url "$DL/$MSI_FILE" \
+            --arg aa_sig "$AA_SIG" --arg aa_url "$DL/$AA_FILE" \
+            --arg ax_sig "$AX_SIG" --arg ax_url "$DL/$AX_FILE" \
+            '{
+              version: $version,
+              pub_date: $pub_date,
+              platforms: {
+                "windows-x86_64":     {signature: $nsis_sig, url: $nsis_url},
+                "windows-x86_64-nsis": {signature: $nsis_sig, url: $nsis_url},
+                "windows-x86_64-msi": {signature: $msi_sig, url: $msi_url},
+                "darwin-aarch64":     {signature: $aa_sig, url: $aa_url},
+                "darwin-x86_64":      {signature: $ax_sig, url: $ax_url}
+              }
+            }' > latest.json
+
+          jq -e '.platforms | has("windows-x86_64") and has("darwin-aarch64") and has("darwin-x86_64")' latest.json >/dev/null \
             || { echo "latest.json missing an expected platform key"; exit 1; }
-
-          # The generic windows-x86_64 key mirrors whichever installer Tauri
-          # picked as primary; decode its current signature to see which file it
-          # references so the correct signature and url are used.
-          GEN_FILE=$(jq -r '.platforms["windows-x86_64"].signature' latest.json \
-            | base64 -d | grep -oE 'file:[^[:space:]]+' | head -n1)
-          GEN_FILE=${GEN_FILE#file:}
-          case "$GEN_FILE" in
-            *.msi) WIN_GEN="$MSI_SIG" ;;
-            *)     WIN_GEN="$EXE_SIG" ;;
-          esac
-
-          jq --arg app "$APP_SIG" --arg gen "$WIN_GEN" \
-             --arg msi "$MSI_SIG" --arg nsis "$EXE_SIG" \
-             --arg appurl "$DL/$APP_FILE" --arg genurl "$DL/$GEN_FILE" \
-             --arg msiurl "$DL/$MSI_FILE" --arg exeurl "$DL/$EXE_FILE" '
-            .platforms["linux-x86_64"] += {signature: $app, url: $appurl}
-            | (if .platforms["linux-x86_64-appimage"]
-               then .platforms["linux-x86_64-appimage"] += {signature: $app, url: $appurl}
-               else . end)
-            | .platforms["windows-x86_64"] += {signature: $gen, url: $genurl}
-            | .platforms["windows-x86_64-msi"] += {signature: $msi, url: $msiurl}
-            | .platforms["windows-x86_64-nsis"] += {signature: $nsis, url: $exeurl}
-          ' latest.json > latest.json.tmp
-          mv latest.json.tmp latest.json
 
           gh release upload "$TAG" latest.json --clobber --repo "$GITHUB_REPOSITORY"

@@ -12,20 +12,17 @@ import { openUrl } from "@tauri-apps/plugin-opener";
 import { useState } from "react";
 import { useUpdater } from "./useUpdater";
 
-type DistroKey = "debian" | "fedora";
+type DistroKey = "debian";
 
 function distroCommand(key: DistroKey, version: string): string {
   switch (key) {
     case "debian":
       return `sudo apt install ./Rex_${version}_amd64.deb`;
-    case "fedora":
-      return `sudo dnf install ./Rex-${version}-1.x86_64.rpm`;
   }
 }
 
 const DISTROS: { key: DistroKey; label: string }[] = [
   { key: "debian", label: "Debian / Ubuntu" },
-  { key: "fedora", label: "Fedora / RHEL" },
 ];
 
 function formatBytes(n: number): string {
