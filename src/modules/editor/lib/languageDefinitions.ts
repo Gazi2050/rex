@@ -446,6 +446,12 @@ export const LANGUAGES: LanguageDefinition[] = [
       ),
   },
   {
+    name: "R",
+    extensions: ["r", "R"],
+    loader: () =>
+      defineLanguage(import("@codemirror/legacy-modes/mode/r").then((m) => m.r)),
+  },
+  {
     name: "Diff",
     extensions: ["diff", "patch"],
     loader: () =>
