@@ -45,7 +45,7 @@
       "../src/modules/terminal/ghostty/webgl/LICENSE.xterm-js": "licenses/terminal/xterm-js.txt"
     },
     "targets": "all",
-    "createUpdaterArtifacts": true,
+    "createUpdaterArtifacts": false,
     "copyright": "Copyright 2026 Gazi2050",
     "license": "Apache-2.0",
     "publisher": "Gazi2050",

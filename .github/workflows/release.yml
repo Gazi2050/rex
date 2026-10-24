@@ -31,8 +31,7 @@ jobs:
           LATEST_TAG=$(git tag --sort=-v:refname | head -n 1)
 
           # First release starts at v1.0.0; later ones bump patch, rolling
-          # over at .9 into minor and at .9 into major (v1.0.8 -> v1.0.9 ->
-          # v1.1.0 -> ... -> v1.9.9 -> v2.0.0).
+          # over at .9 into minor and at .9 into major (v1.0.9 -> v1.1.0).
           if [ -z "$LATEST_TAG" ]; then
             NEW_TAG="v1.0.0"
           else
@@ -70,25 +69,20 @@ jobs:
     name: Build ${{ matrix.platform }}
     needs: version
     permissions:
-      actions: read
       contents: write
-      id-token: write
     strategy:
       fail-fast: false
       matrix:
         include:
-          - platform: macos-latest
-            args: --target aarch64-apple-darwin
-            rust-target: aarch64-apple-darwin
-          - platform: macos-latest
-            args: --target x86_64-apple-darwin
-            rust-target: x86_64-apple-darwin
           - platform: ubuntu-22.04
             args: "--bundles deb"
             rust-target: ""
           - platform: windows-latest
-            args: ""
+            args: "--bundles nsis"
             rust-target: ""
+          - platform: macos-latest
+            args: "--target aarch64-apple-darwin --bundles dmg"
+            rust-target: aarch64-apple-darwin
 
     runs-on: ${{ matrix.platform }}
     steps:
@@ -104,7 +98,6 @@ jobs:
           sed -i.bak 's/^version = ".*"/version = "'"$VER"'"/' src-tauri/Cargo.toml
           rm -f src-tauri/tauri.conf.json.bak src-tauri/Cargo.toml.bak
           echo "App version set to $VER"
-          grep -n '"version"' src-tauri/tauri.conf.json | head -n1
 
       - name: Install Linux build dependencies
         if: matrix.platform == 'ubuntu-22.04'
@@ -137,104 +130,14 @@ jobs:
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Write Apple API key to disk
-        if: startsWith(matrix.platform, 'macos')
-        shell: bash
-        env:
-          KEY_CONTENT: ${{ secrets.APPLE_API_KEY_PATH }}
-        run: |
-          mkdir -p "$HOME/private_keys"
-          printf '%s' "$KEY_CONTENT" > "$HOME/private_keys/AuthKey.p8"
-          echo "APPLE_API_KEY_PATH=$HOME/private_keys/AuthKey.p8" >> "$GITHUB_ENV"
-
-      # Linux ships the .deb only for now; rpm and AppImage return later.
-      # The deb is not an updater target, so Linux updates use the manual
-      # "download the package" flow and contribute no latest.json entries.
-      - id: tauri
-        uses: tauri-apps/tauri-action@v1
+      - uses: tauri-apps/tauri-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REX_CLI_TARGET: ${{ matrix.rust-target }}
-
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-
-          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
-          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
         with:
           tagName: ${{ needs.version.outputs.new_tag }}
           releaseName: "Rex ${{ needs.version.outputs.new_tag }}"
-          releaseBody: "See the assets to download and install. Auto-update is built in."
+          releaseBody: "See the assets to download and install."
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
-
-  # Each build leg uploads its own latest.json (last writer wins), so the
-  # final job rebuilds the combined manifest from the per-artifact .sig
-  # files. Windows uses the NSIS .exe (primary) and the .msi; macOS uses
-  # the per-arch app.tar.gz updater bundles. Linux is absent on purpose:
-  # the .deb is not an updater target, and the app's Linux path points
-  # users at the release page instead.
-  updater-manifest:
-    name: Publish updater manifest
-    needs:
-      - version
-      - build
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Build latest.json from updater signatures
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-          TAG="${{ needs.version.outputs.new_tag }}"
-          VER="${TAG#v}"
-
-          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" \
-            --pattern "*_x64-setup.exe.sig" \
-            --pattern "*_x64_en-US.msi.sig" \
-            --pattern "*_aarch64.app.tar.gz.sig" \
-            --pattern "*_x64.app.tar.gz.sig" --clobber
-
-          pick() {
-            local f
-            f=$(ls ./"$1" | head -n1)
-            basename "$f" .sig
-            base64 -w0 "$f"
-          }
-
-          DL="https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}"
-          { read -r NSIS_FILE NSIS_SIG; } <<< "$(pick '*_x64-setup.exe.sig')"
-          { read -r MSI_FILE MSI_SIG; } <<< "$(pick '*_x64_en-US.msi.sig')"
-          { read -r AA_FILE AA_SIG; } <<< "$(pick '*_aarch64.app.tar.gz.sig')"
-          { read -r AX_FILE AX_SIG; } <<< "$(pick '*_x64.app.tar.gz.sig')"
-
-          jq -n \
-            --arg version "$VER" \
-            --arg pub_date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-            --arg nsis_sig "$NSIS_SIG" --arg nsis_url "$DL/$NSIS_FILE" \
-            --arg msi_sig "$MSI_SIG" --arg msi_url "$DL/$MSI_FILE" \
-            --arg aa_sig "$AA_SIG" --arg aa_url "$DL/$AA_FILE" \
-            --arg ax_sig "$AX_SIG" --arg ax_url "$DL/$AX_FILE" \
-            '{
-              version: $version,
-              pub_date: $pub_date,
-              platforms: {
-                "windows-x86_64":     {signature: $nsis_sig, url: $nsis_url},
-                "windows-x86_64-nsis": {signature: $nsis_sig, url: $nsis_url},
-                "windows-x86_64-msi": {signature: $msi_sig, url: $msi_url},
-                "darwin-aarch64":     {signature: $aa_sig, url: $aa_url},
-                "darwin-x86_64":      {signature: $ax_sig, url: $ax_url}
-              }
-            }' > latest.json
-
-          jq -e '.platforms | has("windows-x86_64") and has("darwin-aarch64") and has("darwin-x86_64")' latest.json >/dev/null \
-            || { echo "latest.json missing an expected platform key"; exit 1; }
-
-          gh release upload "$TAG" latest.json --clobber --repo "$GITHUB_REPOSITORY"
