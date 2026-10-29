@@ -21,7 +21,7 @@ jobs:
     outputs:
       new_tag: ${{ steps.versioning.outputs.new_tag }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -55,7 +55,7 @@ jobs:
           echo "new_tag=$NEW_TAG" >> "$GITHUB_OUTPUT"
 
       - name: Create release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.versioning.outputs.new_tag }}
           name: "Rex ${{ steps.versioning.outputs.new_tag }}"
